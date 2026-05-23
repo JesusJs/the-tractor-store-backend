@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Application\TractorEcommerce.Modules.Catalog.Application.csproj" />
+    <ProjectReference Include="..\..\Shared\TractorEcommerce.Modules.Shared.Application\TractorEcommerce.Modules.Shared.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
