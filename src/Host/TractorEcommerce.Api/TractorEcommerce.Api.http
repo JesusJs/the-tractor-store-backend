@@ -1,0 +1,6 @@
+@TractorEcommerce.Api_HostAddress = http://localhost:5271
+
+GET {{TractorEcommerce.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
