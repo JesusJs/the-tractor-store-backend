@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TractorEcommerce.Modules.Sales.Application.UseCase;
+using TractorEcommerce.Modules.Order.Application.DTOs;
+using TractorEcommerce.Modules.Order.Application.UseCase;
 using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Exceptions;
-using static TractorEcommerce.Modules.Sales.Application.DTOs.SalesDtos;
 
 namespace TractorEcommerce.Api.Controllers
 {
