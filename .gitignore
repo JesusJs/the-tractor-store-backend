@@ -482,3 +482,18 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# EF Core Migrations
+**/Migrations/
+
+# Database files and SQLite temp files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Local Docker DB volumes
+.db-data/
+postgres-data/
+data/

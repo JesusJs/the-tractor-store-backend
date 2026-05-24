@@ -10,6 +10,7 @@ using TractorEcommerce.Modules.Sales.Application.Interfaces.Service;
 using TractorEcommerce.Modules.Sales.Infrastructure.Persistence;
 using TractorEcommerce.Modules.Sales.Infrastructure.Repository;
 using TractorEcommerce.Modules.Shared.Application.Events;
+using TractorEcommerce.Modules.Catalog.Application.UseCase;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +63,21 @@ builder.Services.AddScoped<IInventoryService, SqlInventoryService>();
 
 // Casos de Uso (Handlers)
 builder.Services.AddScoped<CheckoutCommandHandler>();
+
+// Catalog Use Cases
+builder.Services.AddScoped<GetHomeTeasersQueryHandler>();
+builder.Services.AddScoped<GetCatalogCategoryQueryHandler>();
+builder.Services.AddScoped<GetProductDetailQueryHandler>();
+builder.Services.AddScoped<GetRecommendationsQueryHandler>();
+builder.Services.AddScoped<GetStoresQueryHandler>();
+builder.Services.AddScoped<GetInventoryStatusQueryHandler>();
+
+// Sales Use Cases
+builder.Services.AddScoped<AddToCartCommandHandler>();
+builder.Services.AddScoped<RemoveFromCartCommandHandler>();
+builder.Services.AddScoped<GetCartQueryHandler>();
+builder.Services.AddScoped<GetMiniCartQueryHandler>();
+builder.Services.AddScoped<GetOrderByIdQueryHandler>();
 
 
 // ==========================================
