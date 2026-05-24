@@ -20,7 +20,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Modules\Catalog\Infrastructure\TractorEcommerce.Modules.Catalog.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Modules\Sales\Infrastructure\TractorEcommerce.Modules.Sales.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Shared\TractorEcommerce.Modules.Shared.Application\TractorEcommerce.Modules.Shared.Application.csproj" />
     <ProjectReference Include="..\..\Modules\Shared\TractorEcommerce.Modules.Shared.Infrastructure\TractorEcommerce.Modules.Shared.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Order\Infrastructure\TractorEcommerce.Modules.Order.Infrastructure.csproj" />
