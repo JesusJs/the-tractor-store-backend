@@ -14,6 +14,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.7" />
   </ItemGroup>
 
@@ -22,6 +23,9 @@
     <ProjectReference Include="..\..\Modules\Sales\Infrastructure\TractorEcommerce.Modules.Sales.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Shared\TractorEcommerce.Modules.Shared.Application\TractorEcommerce.Modules.Shared.Application.csproj" />
     <ProjectReference Include="..\..\Modules\Shared\TractorEcommerce.Modules.Shared.Infrastructure\TractorEcommerce.Modules.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Order\Infrastructure\TractorEcommerce.Modules.Order.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Inventory\Infrastructure\TractorEcommerce.Modules.Inventory.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Cart\Infrastructure\TractorEcommerce.Modules.Cart.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
