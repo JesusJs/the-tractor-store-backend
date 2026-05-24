@@ -27,6 +27,12 @@ builder.Services.AddDbContext<CatalogDbContext>(options =>
 builder.Services.AddDbContext<SalesDbContext>(options =>
     options.UseNpgsql(connectionString, b => b.MigrationsAssembly("TractorEcommerce.Modules.Sales.Infrastructure")));
 
+// NUEVO: Registrar DbContext del Módulo de Órdenes (Siguiendo tu patrón)
+builder.Services.AddDbContext<TractorEcommerce.Modules.Order.Infrastructure.Data.OrderDbContext>(options =>
+    options.UseNpgsql(connectionString, b => b.MigrationsAssembly("TractorEcommerce.Modules.Order.Infrastructure")));
+
+builder.Services.AddDbContext<TractorEcommerce.Modules.Inventory.Infrastructure.Data.InventoryDbContext>(options =>
+    options.UseNpgsql(connectionString, b => b.MigrationsAssembly("TractorEcommerce.Modules.Inventory.Infrastructure")));
 
 // ==========================================
 // 2. CONFIGURACIÓN DE KAFKA (MESSAGING)
@@ -58,6 +64,15 @@ builder.Services.AddCors(options =>
 // 4. ARQUITECTURA HEXAGONAL / INYECCIÓN DE DEPENDENCIAS
 // ==========================================
 builder.Services.AddScoped<ICatalogRepository, TractorEcommerce.Modules.Catalog.Infrastructure.Repository.SqlCatalogRepository>();
+// Interfaces y Repositorios de Order
+builder.Services.AddScoped<TractorEcommerce.Modules.Order.Application.Interfaces.Repository.IOrderRepository, TractorEcommerce.Modules.Order.Infrastructure.Repository.OrderRepository>();
+
+// Casos de Uso de Order (Si los necesitas directo en controladores o handlers)
+builder.Services.AddScoped<TractorEcommerce.Modules.Order.Application.UseCase.CreateOrderFromCheckoutUseCase>();
+builder.Services.AddScoped<TractorEcommerce.Modules.Inventory.Application.Interfaces.Repository.IInventoryRepository, TractorEcommerce.Modules.Inventory.Infrastructure.Repository.InventoryRepository>();
+
+// Registrar Casos de Uso de Inventario
+builder.Services.AddScoped<TractorEcommerce.Modules.Inventory.Application.UseCase.DeductStockOnOrderPlacedUseCase>();
 builder.Services.AddScoped<ISalesRepository, SqlSalesRepository>();
 builder.Services.AddScoped<IInventoryService, SqlInventoryService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
