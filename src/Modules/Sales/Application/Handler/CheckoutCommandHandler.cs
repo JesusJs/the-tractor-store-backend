@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using TractorEcommerce.Modules.Sales.Application.Interfaces.Repository;
@@ -16,10 +16,11 @@ namespace TractorEcommerce.Modules.Sales.Application.Handler
         private readonly IInventoryService _inventoryService; // Llama internamente o vía módulo al stock
         private readonly IEventBus _eventBus;
 
-        public CheckoutCommandHandler(ISalesRepository salesRepository, IInventoryService inventoryService)
+        public CheckoutCommandHandler(ISalesRepository salesRepository, IInventoryService inventoryService, IEventBus eventBus)
         {
             _salesRepository = salesRepository;
             _inventoryService = inventoryService;
+            _eventBus = eventBus;
         }
 
         public async Task<OrderReceiptDto> ExecuteAsync(string userId, OrderPayloadDto payload)
@@ -63,15 +64,18 @@ namespace TractorEcommerce.Modules.Sales.Application.Handler
                 );
 
                 // 4. Guardar la orden en persistencia
-                //await _salesRepository.SaveOrderReceiptAsync(receipt);
+                await _salesRepository.SaveOrderReceiptAsync(receipt);
+
+                // Mapeamos los items para el evento de Kafka antes de vaciar el carrito
+                var eventItems = cart.Items.Select(i => new OrderEventItem(i.VariantId, i.Quantity)).ToList();
 
                 // 5. Vaciar el carrito del usuario
                 cart.Clear();
                 await _salesRepository.SaveCartAsync(cart);
 
                 // Confirmar cambios en la base de datos (Commit)
-               await transaction.CommitAsync();
-                var eventItems = cart.Items.Select(i => new OrderEventItem(i.VariantId, i.Quantity));
+                await transaction.CommitAsync();
+
                 var orderPlacedEvent = new OrderPlacedEvent(orderId, eventItems, DateTime.UtcNow);
                 // Publicamos en Kafka de forma asíncrona y desacoplada
                 await _eventBus.PublishAsync(

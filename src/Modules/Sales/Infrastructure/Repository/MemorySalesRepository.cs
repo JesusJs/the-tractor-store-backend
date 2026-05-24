@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using TractorEcommerce.Modules.Sales.Application.Interfaces;
@@ -42,6 +42,11 @@ namespace TractorEcommerce.Modules.Sales.Infrastructure.Repository
         {
             // Aquí se guardaría en la tabla sales.orders en Postgres
             return Task.CompletedTask;
+        }
+
+        public Task<OrderReceiptDto?> GetOrderByIdAsync(string id)
+        {
+            return Task.FromResult<OrderReceiptDto?>(null);
         }
 
         public Task<IDbTransactionWrapper> BeginTransactionAsync()

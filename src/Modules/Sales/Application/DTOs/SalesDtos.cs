@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.ComponentModel.DataAnnotations;
 
 namespace TractorEcommerce.Modules.Sales.Application.DTOs
 {
@@ -53,6 +51,7 @@ namespace TractorEcommerce.Modules.Sales.Application.DTOs
         /// Payload recibido al agregar un producto al carrito.
         /// </summary>
         public record AddToCartRequest(
+            [Required(ErrorMessage = "El SKU es obligatorio.")]
             string Sku
         );
 
@@ -60,9 +59,17 @@ namespace TractorEcommerce.Modules.Sales.Application.DTOs
         /// Datos de facturación, envío y recogida enviados por el Checkout al procesar la compra.
         /// </summary>
         public record OrderPayloadDto(
+            [Required(ErrorMessage = "El nombre es obligatorio.")]
+            [StringLength(50, MinimumLength = 2, ErrorMessage = "El nombre debe tener entre 2 y 50 caracteres.")]
             string FirstName,
+
+            [Required(ErrorMessage = "El apellido es obligatorio.")]
+            [StringLength(50, MinimumLength = 2, ErrorMessage = "El apellido debe tener entre 2 y 50 caracteres.")]
             string LastName,
+
+            [Required(ErrorMessage = "La tienda es obligatoria.")]
             string StoreId,
+
             IEnumerable<string> ExtraPickups
         );
 

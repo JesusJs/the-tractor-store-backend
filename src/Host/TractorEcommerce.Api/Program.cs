@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TractorEcommerce.Api.Extensions;
+using TractorEcommerce.Modules.Catalog.Application.Ports;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Events.Messaging;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Messaging;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Persistence;
@@ -55,9 +56,9 @@ builder.Services.AddCors(options =>
 // ==========================================
 // 4. ARQUITECTURA HEXAGONAL / INYECCIÓN DE DEPENDENCIAS
 // ==========================================
-// NOTA: Cuando termines tus repositorios reales de EF Core, cambiarás 'MemorySalesRepository' por 'SqlSalesRepository' aquí:
-builder.Services.AddScoped<ISalesRepository, MemorySalesRepository>();
-builder.Services.AddScoped<IInventoryService, MemoryInventoryService>();
+builder.Services.AddScoped<ICatalogRepository, SqlCatalogRepository>();
+builder.Services.AddScoped<ISalesRepository, SqlSalesRepository>();
+builder.Services.AddScoped<IInventoryService, SqlInventoryService>();
 
 // Casos de Uso (Handlers)
 builder.Services.AddScoped<CheckoutCommandHandler>();
@@ -73,8 +74,31 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 // ==========================================
+// 6. AUTO-MIGRACIÓN DE BASE DE DATOS AL INICIAR
+// ==========================================
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var catalogContext = services.GetRequiredService<CatalogDbContext>();
+        await catalogContext.Database.MigrateAsync();
+
+        var salesContext = services.GetRequiredService<SalesDbContext>();
+        await salesContext.Database.MigrateAsync();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ocurrió un error al aplicar las migraciones de base de datos.");
+    }
+}
+
+// ==========================================
 // PIPELINE DE PETICIONES HTTP (MIDDLEWARES)
 // ==========================================
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

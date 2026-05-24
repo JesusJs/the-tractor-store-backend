@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using TractorEcommerce.Modules.Sales.Domain.Entities;
@@ -11,6 +11,7 @@ namespace TractorEcommerce.Modules.Sales.Application.Interfaces.Repository
         Task<Cart?> GetCartByUserIdAsync(string userId);
         Task SaveCartAsync(Cart Cart);
         Task SaveOrderReceiptAsync(OrderReceiptDto order);
+        Task<OrderReceiptDto?> GetOrderByIdAsync(string id);
         Task<IDbTransactionWrapper> BeginTransactionAsync();
     }
 }
