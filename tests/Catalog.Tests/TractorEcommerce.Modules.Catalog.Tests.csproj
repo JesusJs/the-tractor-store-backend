@@ -22,4 +22,8 @@
     <ProjectReference Include="..\..\src\Modules\Catalog\Application\TractorEcommerce.Modules.Catalog.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Application\" />
+  </ItemGroup>
+
 </Project>
