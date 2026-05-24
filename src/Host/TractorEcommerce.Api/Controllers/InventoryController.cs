@@ -1,30 +1,30 @@
-﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TractorEcommerce.Modules.Catalog.Application.Ports;
 using static TractorEcommerce.Modules.Catalog.Application.DTOs.CatalogDtos;
 
 namespace TractorEcommerce.Api.Controllers
 {
     [ApiController]
     [Route("api/inventory")]
-    [Authorize]
     public class InventoryController : ControllerBase
     {
-        private static readonly Dictionary<string, int> MockStock = new()
+        private readonly ICatalogRepository _catalogRepository;
+
+        public InventoryController(ICatalogRepository catalogRepository)
         {
-            { "TX-001-GPS", 8 },
-            { "TX-001-AI", 3 },
-            { "TX-CLS-01", 0 } // Provoca el estado "Out of stock" en tu front
-        };
+            _catalogRepository = catalogRepository;
+        }
 
         [HttpGet("{sku}")]
-        public ActionResult<InventoryStatusDto> GetInventory(string sku)
+        public async Task<ActionResult<InventoryStatusDto>> GetInventory(string sku)
         {
-            if (!MockStock.TryGetValue(sku, out var stock))
+            var variant = await _catalogRepository.GetVariantBySkuAsync(sku);
+            if (variant == null)
             {
                 return NotFound(new { message = $"SKU {sku} no localizado en inventario." });
             }
 
-            return Ok(new InventoryStatusDto(sku, stock));
+            return Ok(new InventoryStatusDto(sku, variant.Stock));
         }
     }
 }
