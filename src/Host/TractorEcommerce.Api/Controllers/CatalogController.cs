@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using static TractorEcommerce.Modules.Catalog.Application.DTOs.CatalogDtos;
 
 namespace TractorEcommerce.Api.Controllers
 {
     [ApiController]
     [Route("api/catalog")]
+    [Authorize]
     public class CatalogController: ControllerBase
     {
         private static readonly List<ProductItemDto> MockProducts = new()

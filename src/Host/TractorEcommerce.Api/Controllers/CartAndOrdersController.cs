@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TractorEcommerce.Modules.Sales.Application.Handler;
 using static TractorEcommerce.Modules.Sales.Application.DTOs.SalesDtos;
 
@@ -6,6 +7,7 @@ namespace TractorEcommerce.Api.Controllers
 {
     [ApiController]
     [Route("api")]
+    [Authorize]
     public class CartAndOrdersController : ControllerBase
     {
         private readonly CheckoutCommandHandler _checkoutHandler;

@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using static TractorEcommerce.Modules.Catalog.Application.DTOs.CatalogDtos;
 
 namespace TractorEcommerce.Api.Controllers
 {
     [ApiController]
     [Route("api/inventory")]
+    [Authorize]
     public class InventoryController : ControllerBase
     {
         private static readonly Dictionary<string, int> MockStock = new()
