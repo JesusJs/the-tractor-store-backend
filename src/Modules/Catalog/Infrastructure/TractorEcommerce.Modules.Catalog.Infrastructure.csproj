@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Sales\Domain\TractorEcommerce.Modules.Sales.Domain.csproj" />
     <ProjectReference Include="..\Application\TractorEcommerce.Modules.Catalog.Application.csproj" />
     <ProjectReference Include="..\..\Shared\TractorEcommerce.Modules.Shared.Application\TractorEcommerce.Modules.Shared.Application.csproj" />
   </ItemGroup>
