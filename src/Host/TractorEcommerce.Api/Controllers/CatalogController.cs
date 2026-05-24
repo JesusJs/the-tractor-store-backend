@@ -6,7 +6,7 @@ using static TractorEcommerce.Modules.Catalog.Application.DTOs.CatalogDtos;
 namespace TractorEcommerce.Api.Controllers
 {
     [ApiController]
-    [Route("api/catalog")]
+    [Route("api/v1/catalog")]
     public class CatalogController : ControllerBase
     {
         private readonly GetHomeTeasersUseCase _getHomeTeasers;
