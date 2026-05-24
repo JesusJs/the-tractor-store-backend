@@ -7,7 +7,10 @@ namespace TractorEcommerce.Modules.Inventory.Application.Interfaces.Repository
 {
     public interface IInventoryRepository
     {
-        Task<SkuStock?> GetBySkuAsync(string sku);
-        Task UpdateAsync(SkuStock stock);
+        Task UpdateAsync(InventoryItem stock);
+
+        Task<InventoryItem?> GetBySkuAsync(string sku);
+
+        Task UpsertStockAsync(string sku, int quantity);
     }
 }
