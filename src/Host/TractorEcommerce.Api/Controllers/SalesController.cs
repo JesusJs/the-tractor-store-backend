@@ -1,9 +1,7 @@
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using TractorEcommerce.Modules.Catalog.Application.Ports;
-using TractorEcommerce.Modules.Sales.Application.Handler;
-using TractorEcommerce.Modules.Sales.Application.Interfaces.Repository;
-using TractorEcommerce.Modules.Sales.Domain.Entities;
+using TractorEcommerce.Modules.Sales.Application.UseCase;
 using static TractorEcommerce.Modules.Sales.Application.DTOs.SalesDtos;
 
 namespace TractorEcommerce.Api.Controllers
@@ -12,53 +10,46 @@ namespace TractorEcommerce.Api.Controllers
     [Route("api")]
     public class SalesController : ControllerBase
     {
-        private readonly CheckoutCommandHandler _checkoutHandler;
-        private readonly AddToCartCommandHandler _addToCartHandler;
-        private readonly RemoveFromCartCommandHandler _removeFromCartHandler;
-        private readonly GetCartQueryHandler _getCartQueryHandler;
-        private readonly GetMiniCartQueryHandler _getMiniCartQueryHandler;
-        private readonly GetOrderByIdQueryHandler _getOrderByIdQueryHandler;
-        private readonly ICatalogRepository _catalogRepository;
+        private readonly CheckoutUseCase _checkoutUseCase;
+        private readonly AddToCartUseCase _addToCartUseCase;
+        private readonly RemoveFromCartUseCase _removeFromCartUseCase;
+        private readonly GetCartUseCase _getCartUseCase;
+        private readonly GetMiniCartUseCase _getMiniCartUseCase;
+        private readonly GetOrderByIdUseCase _getOrderByIdUseCase;
 
         public SalesController(
-            CheckoutCommandHandler checkoutHandler,
-            AddToCartCommandHandler addToCartHandler,
-            RemoveFromCartCommandHandler removeFromCartHandler,
-            GetCartQueryHandler getCartQueryHandler,
-            GetMiniCartQueryHandler getMiniCartQueryHandler,
-            GetOrderByIdQueryHandler getOrderByIdQueryHandler,
-            ICatalogRepository catalogRepository)
+            CheckoutUseCase checkoutUseCase,
+            AddToCartUseCase addToCartUseCase,
+            RemoveFromCartUseCase removeFromCartUseCase,
+            GetCartUseCase getCartUseCase,
+            GetMiniCartUseCase getMiniCartUseCase,
+            GetOrderByIdUseCase getOrderByIdUseCase)
         {
-            _checkoutHandler = checkoutHandler;
-            _addToCartHandler = addToCartHandler;
-            _removeFromCartHandler = removeFromCartHandler;
-            _getCartQueryHandler = getCartQueryHandler;
-            _getMiniCartQueryHandler = getMiniCartQueryHandler;
-            _getOrderByIdQueryHandler = getOrderByIdQueryHandler;
-            _catalogRepository = catalogRepository;
+            _checkoutUseCase = checkoutUseCase;
+            _addToCartUseCase = addToCartUseCase;
+            _removeFromCartUseCase = removeFromCartUseCase;
+            _getCartUseCase = getCartUseCase;
+            _getMiniCartUseCase = getMiniCartUseCase;
+            _getOrderByIdUseCase = getOrderByIdUseCase;
         }
 
         private string GetOrCreateCartId()
         {
             if (User?.Identity?.IsAuthenticated == true)
             {
-                var nameIdentifier = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                if (!string.IsNullOrWhiteSpace(nameIdentifier))
-                {
-                    return nameIdentifier;
-                }
+                var nameId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrWhiteSpace(nameId))
+                    return nameId;
             }
 
             if (Request.Cookies.TryGetValue("tractor_session", out var sessionId) && !string.IsNullOrWhiteSpace(sessionId))
-            {
                 return sessionId;
-            }
 
             sessionId = Guid.NewGuid().ToString();
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false, // Local HTTP development
+                Secure = false,
                 SameSite = SameSiteMode.Lax,
                 Expires = DateTimeOffset.UtcNow.AddDays(7)
             };
@@ -71,8 +62,8 @@ namespace TractorEcommerce.Api.Controllers
         public async Task<ActionResult<CartDto>> GetCart()
         {
             var cartId = GetOrCreateCartId();
-            var cartDto = await _getCartQueryHandler.ExecuteAsync(cartId);
-            return Ok(cartDto);
+            var cart = await _getCartUseCase.ExecuteAsync(cartId);
+            return Ok(cart);
         }
 
         // 8. GET /api/cart/mini
@@ -80,7 +71,7 @@ namespace TractorEcommerce.Api.Controllers
         public async Task<ActionResult<MiniCartDto>> GetMiniCart()
         {
             var cartId = GetOrCreateCartId();
-            var miniCart = await _getMiniCartQueryHandler.ExecuteAsync(cartId);
+            var miniCart = await _getMiniCartUseCase.ExecuteAsync(cartId);
             return Ok(miniCart);
         }
 
@@ -91,27 +82,18 @@ namespace TractorEcommerce.Api.Controllers
             if (string.IsNullOrWhiteSpace(request.Sku))
                 return BadRequest(new { message = "El SKU es mandatorio en el cuerpo de la petición." });
 
-            var variant = await _catalogRepository.GetVariantBySkuAsync(request.Sku);
-            if (variant == null)
-                return NotFound(new { message = $"El SKU {request.Sku} no existe en el catálogo." });
-
-            var product = await _catalogRepository.GetByIdAsync(variant.ProductId);
-            if (product == null)
-                return NotFound(new { message = $"El producto asociado al SKU {request.Sku} no existe." });
-
             var cartId = GetOrCreateCartId();
-            var command = new AddToCartCommand(
-                UserId: cartId,
-                ProductId: product.Id,
-                Sku: variant.Sku,
-                ProductName: product.Name,
-                VariantName: variant.name,
-                Price: product.Price,
-                Image: product.Image
-            );
+            var command = new AddToCartCommand(cartId, request.Sku);
 
-            var cartDto = await _addToCartHandler.ExecuteAsync(command);
-            return Ok(cartDto);
+            try
+            {
+                var cart = await _addToCartUseCase.ExecuteAsync(command);
+                return Ok(cart);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
 
         // 10. DELETE /api/cart/items/{sku}
@@ -119,8 +101,8 @@ namespace TractorEcommerce.Api.Controllers
         public async Task<ActionResult<CartDto>> RemoveFromCart(string sku)
         {
             var cartId = GetOrCreateCartId();
-            var cartDto = await _removeFromCartHandler.ExecuteAsync(cartId, sku);
-            return Ok(cartDto);
+            var cart = await _removeFromCartUseCase.ExecuteAsync(cartId, sku);
+            return Ok(cart);
         }
 
         // 11. POST /api/orders
@@ -133,7 +115,7 @@ namespace TractorEcommerce.Api.Controllers
             var cartId = GetOrCreateCartId();
             try
             {
-                var receipt = await _checkoutHandler.ExecuteAsync(cartId, payload);
+                var receipt = await _checkoutUseCase.ExecuteAsync(cartId, payload);
                 return Ok(receipt);
             }
             catch (InvalidOperationException ex)
@@ -146,11 +128,9 @@ namespace TractorEcommerce.Api.Controllers
         [HttpGet("orders/{id}")]
         public async Task<ActionResult<OrderReceiptDto>> GetOrder(string id)
         {
-            var receipt = await _getOrderByIdQueryHandler.ExecuteAsync(id);
+            var receipt = await _getOrderByIdUseCase.ExecuteAsync(id);
             if (receipt == null)
-            {
                 return NotFound(new { message = $"La orden con identificador {id} no existe." });
-            }
             return Ok(receipt);
         }
     }
