@@ -4,13 +4,14 @@ using TractorEcommerce.Modules.Catalog.Application.Ports;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Events.Messaging;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Messaging;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Persistence;
-using TractorEcommerce.Modules.Sales.Application.Handler; // Asegúrate de que tu CheckoutCommandHandler esté aquí
+using TractorEcommerce.Modules.Sales.Application.UseCase;
 using TractorEcommerce.Modules.Sales.Application.Interfaces.Repository;
 using TractorEcommerce.Modules.Sales.Application.Interfaces.Service;
 using TractorEcommerce.Modules.Sales.Infrastructure.Persistence;
 using TractorEcommerce.Modules.Sales.Infrastructure.Repository;
 using TractorEcommerce.Modules.Shared.Application.Events;
 using TractorEcommerce.Modules.Catalog.Application.UseCase;
+using TractorEcommerce.Modules.Catalog.Infrastructure.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,27 +58,26 @@ builder.Services.AddCors(options =>
 // ==========================================
 // 4. ARQUITECTURA HEXAGONAL / INYECCIÓN DE DEPENDENCIAS
 // ==========================================
-builder.Services.AddScoped<ICatalogRepository, SqlCatalogRepository>();
+builder.Services.AddScoped<ICatalogRepository, TractorEcommerce.Modules.Catalog.Infrastructure.Repository.SqlCatalogRepository>();
 builder.Services.AddScoped<ISalesRepository, SqlSalesRepository>();
 builder.Services.AddScoped<IInventoryService, SqlInventoryService>();
-
-// Casos de Uso (Handlers)
-builder.Services.AddScoped<CheckoutCommandHandler>();
+builder.Services.AddScoped<ICatalogService, CatalogService>();
 
 // Catalog Use Cases
-builder.Services.AddScoped<GetHomeTeasersQueryHandler>();
-builder.Services.AddScoped<GetCatalogCategoryQueryHandler>();
-builder.Services.AddScoped<GetProductDetailQueryHandler>();
-builder.Services.AddScoped<GetRecommendationsQueryHandler>();
-builder.Services.AddScoped<GetStoresQueryHandler>();
-builder.Services.AddScoped<GetInventoryStatusQueryHandler>();
+builder.Services.AddScoped<GetHomeTeasersUseCase>();
+builder.Services.AddScoped<GetCatalogCategoryUseCase>();
+builder.Services.AddScoped<GetProductDetailUseCase>();
+builder.Services.AddScoped<GetRecommendationsUseCase>();
+builder.Services.AddScoped<GetStoresUseCase>();
+builder.Services.AddScoped<GetInventoryStatusUseCase>();
 
 // Sales Use Cases
-builder.Services.AddScoped<AddToCartCommandHandler>();
-builder.Services.AddScoped<RemoveFromCartCommandHandler>();
-builder.Services.AddScoped<GetCartQueryHandler>();
-builder.Services.AddScoped<GetMiniCartQueryHandler>();
-builder.Services.AddScoped<GetOrderByIdQueryHandler>();
+builder.Services.AddScoped<CheckoutUseCase>();
+builder.Services.AddScoped<AddToCartUseCase>();
+builder.Services.AddScoped<RemoveFromCartUseCase>();
+builder.Services.AddScoped<GetCartUseCase>();
+builder.Services.AddScoped<GetMiniCartUseCase>();
+builder.Services.AddScoped<GetOrderByIdUseCase>();
 
 
 // ==========================================
@@ -115,12 +115,12 @@ using (var scope = app.Services.CreateScope())
 // ==========================================
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+//if (app.Environment.IsDevelopment())
+//{
+//    app.MapOpenApi();
+//}
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 // El orden de estos 3 middlewares es de vida o muerte:
 app.UseCors("MfeCorsPolicy");
