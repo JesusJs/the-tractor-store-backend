@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TractorEcommerce.Modules.Sales.Application.UseCase;
 using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Exceptions;
+using static TractorEcommerce.Modules.Sales.Application.DTOs.SalesDtos;
 
 namespace TractorEcommerce.Api.Controllers
 {
@@ -8,62 +9,38 @@ namespace TractorEcommerce.Api.Controllers
     [Route("api/v1/orders")]
     public class OrderController : ControllerBase
     {
-        private readonly CheckoutUseCase _checkoutUseCase; // Desde el módulo Cart para iniciar el flujo asíncrono
-        private readonly GetOrderByIdUseCase _getOrderByIdUseCase; // Desde el módulo Order para lectura de DB
+        private readonly CheckoutUseCase _checkoutUseCase;
         private readonly ILogger<OrderController> _logger;
 
-        public OrderController(
-            CheckoutUseCase checkoutUseCase,
-            GetOrderByIdUseCase getOrderByIdUseCase,
-            ILogger<OrderController> logger)
+        public OrderController(CheckoutUseCase checkoutUseCase, ILogger<OrderController> logger)
         {
             _checkoutUseCase = checkoutUseCase;
-            _getOrderByIdUseCase = getOrderByIdUseCase;
             _logger = logger;
         }
 
         [HttpPost]
-        public async Task<ActionResult> PlaceOrder([FromBody] OrderPayloadDto payload)
+        public async Task<ActionResult<OrderReceiptDto>> PlaceOrder([FromBody] OrderPayloadDto payload)
         {
             if (payload == null || string.IsNullOrWhiteSpace(payload.StoreId))
                 throw new ArgumentException("Estructura de orden inválida. Datos obligatorios faltantes.");
 
-            // Obtenemos el ID del carrito directamente desde las cookies de la petición HTTP actual
+            // 1. LEER COOKIE: Intentamos obtener el token de sesión del carrito
             if (!Request.Cookies.TryGetValue("tractor_session", out var cartId) || string.IsNullOrWhiteSpace(cartId))
             {
-                _logger.LogWarning("Intento de Checkout rechazado: No se encontró cookie de sesión válida.");
-                throw new InvalidOperationException("No existe una sesión de compra activa.");
+                _logger.LogWarning("Intento de Checkout rechazado: No se encontró cookie de sesión 'tractor_session'.");
+                throw new InvalidOperationException("No se puede procesar la orden porque no hay una sesión de compra activa.");
             }
 
-            _logger.LogInformation("Iniciando comando de checkout asíncrono para el carrito {CartId}", cartId);
+            _logger.LogInformation("Iniciando procesamiento de checkout síncrono para el carrito/usuario: {CartId}", cartId);
 
-            // Se dispara el caso de uso de Cart que publica en Kafka: checkout-requested-topic
-            // El cliente recibe un 202 Accepted indicando que la orden entró a la cola de procesamiento.
-            string customerId = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
-            await _checkoutUseCase.ExecuteAsync(cartId, customerId);
+            // Si el usuario está autenticado usamos su ID, de lo contrario usamos el 'cartId' (SessionId de la cookie HttpOnly)
+            string userId = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? cartId;
 
-            return Accepted(new { message = "La orden está siendo procesada.", sessionId = cartId });
-        }
+            // 2. SOLUCIÓN AL ERROR: Invocamos la función con la firma exacta que me pasaste (string, OrderPayloadDto)
+            var receipt = await _checkoutUseCase.ExecuteAsync(userId, payload);
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<object>> GetOrder(string id)
-        {
-            if (string.IsNullOrWhiteSpace(id))
-                throw new ArgumentException("El identificador de la orden es obligatorio.", nameof(id));
-
-            _logger.LogInformation("Buscando recibo de la orden: {OrderId}", id);
-
-            var receipt = await _getOrderByIdUseCase.ExecuteAsync(id);
-
-            if (receipt == null)
-            {
-                _logger.LogWarning("Orden no localizada en la base de datos: {OrderId}", id);
-                throw new DomainNotFoundException($"La orden con identificador {id} no existe.");
-            }
-
+            // Retornamos el recibo con un 200 OK tal como lo manejabas originalmente
             return Ok(receipt);
         }
     }
-
-    public record OrderPayloadDto(string FirstName, string StoreId);
 }

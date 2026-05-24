@@ -78,7 +78,11 @@ namespace TractorEcommerce.Api.Controllers
             var cartId = GetOrCreateCartId();
             _logger.LogInformation("Añadiendo ítem al carrito {CartId}. SKU: {Sku}", cartId, request.Sku);
 
-            var cart = await _addToCartUseCase.ExecuteAsync(cartId, request.Sku);
+            // SOLUCIÓN: Instanciamos el command que tu caso de uso exige
+            var command = new AddToCartCommand(cartId, request.Sku);
+
+            // Se lo pasamos como único argumento
+            var cart = await _addToCartUseCase.ExecuteAsync(command);
             return Ok(cart);
         }
 
