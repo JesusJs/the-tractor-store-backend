@@ -1,6 +1,5 @@
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using TractorEcommerce.Modules.Catalog.Application.DTOs;
 using TractorEcommerce.Modules.Catalog.Application.Ports;
 
 namespace TractorEcommerce.Modules.Catalog.Application.UseCase
@@ -14,17 +13,16 @@ namespace TractorEcommerce.Modules.Catalog.Application.UseCase
             _catalogRepository = catalogRepository;
         }
 
-        public async Task<IEnumerable<object>> ExecuteAsync()
+        public async Task<IEnumerable<StoreResponse>> ExecuteAsync()
         {
             var stores = await _catalogRepository.GetStoresAsync();
-            return stores.Select(s => new
-            {
-                id = s.Id,
-                name = s.Name,
-                address = s.Address,
-                city = s.City,
-                image = s.Image
-            }).ToList();
+            return stores.Select(s => new StoreResponse(
+             s.Id,
+             s.Name,
+             s.Address ?? string.Empty,
+             s.City ?? string.Empty,
+             s.Image ?? string.Empty
+            )).ToList();
         }
     }
 }
