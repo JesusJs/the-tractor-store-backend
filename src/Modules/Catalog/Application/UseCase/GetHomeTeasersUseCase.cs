@@ -11,17 +11,17 @@ namespace TractorEcommerce.Modules.Catalog.Application.UseCase
             var teasers = new List<TeaserDto>
             {
                 new TeaserDto(
-                    Id: "teaser-classics",
-                    Title: "Classic Vintage Tractors",
-                    Image: "https://placehold.co/600x400/png?text=Classic+Vintage",
-                    Filter: "classics"
+                    Id: "AU-04",
+                    Title: "Sapphire Sunworker 460R",
+                    Image: "https://blueprint.the-tractor.store/cdn/img/product/200/AU-04-RD.webp",
+                    Filter: "TractorStore Autonomous"
                 ),
                 new TeaserDto(
-                    Id: "teaser-autonomous",
-                    Title: "Autonomous & AI Tractors",
-                    Image: "https://placehold.co/600x400/png?text=Autonomous+Titan",
-                    Filter: "autonomous"
-                )
+                    Id: "CL-08",
+                    Title: "Holland Hamster",
+                    Image: "https://blueprint.the-tractor.store/cdn/img/product/200/CL-08-GR.webp",
+                    Filter: "TractorStore Classic"
+                ),
             };
             return Task.FromResult<IEnumerable<TeaserDto>>(teasers);
         }
