@@ -55,6 +55,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TractorEcommerce.Modules.Sh
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TractorEcommerce.Modules.Shared.Infrastructure", "src\Modules\Shared\TractorEcommerce.Modules.Shared.Infrastructure\TractorEcommerce.Modules.Shared.Infrastructure.csproj", "{C65F585E-D8DB-4779-82EC-B0742BF5ADD9}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Inventory", "Inventory", "{EDC3B365-B5E7-4249-B732-FE3FE168D571}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -226,6 +228,7 @@ Global
 		{70E89A33-AE1E-0B89-8B3A-78191417C6D1} = {EC447DCF-ABFA-6E24-52A5-D7FD48A5C558}
 		{1DD9F51E-7830-425E-B188-B7F671659490} = {70E89A33-AE1E-0B89-8B3A-78191417C6D1}
 		{C65F585E-D8DB-4779-82EC-B0742BF5ADD9} = {70E89A33-AE1E-0B89-8B3A-78191417C6D1}
+		{EDC3B365-B5E7-4249-B732-FE3FE168D571} = {EC447DCF-ABFA-6E24-52A5-D7FD48A5C558}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6A7D322D-F36D-4F5A-A041-1A3B22764D77}
