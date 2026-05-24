@@ -1,15 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using TractorEcommerce.Api.Extensions;
 using TractorEcommerce.Modules.Catalog.Application.Ports;
+using TractorEcommerce.Modules.Catalog.Application.UseCase;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Events.Messaging;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Messaging;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Persistence;
-using TractorEcommerce.Modules.Sales.Application.UseCase;
-using TractorEcommerce.Modules.Sales.Application.Interfaces.Repository;
-using TractorEcommerce.Modules.Sales.Application.Interfaces.Service;
-using TractorEcommerce.Modules.Sales.Infrastructure.Persistence;
-using TractorEcommerce.Modules.Sales.Infrastructure.Repository;
-using TractorEcommerce.Modules.Catalog.Application.UseCase;
+using TractorEcommerce.Modules.Inventory.Infrastructure.Messaging;
+using TractorEcommerce.Modules.Order.Infrastructure.Messaging;
 using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Events;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,10 +19,7 @@ var connectionString = builder.Configuration.GetConnectionString("PostgresConnec
 // Registrar DbContext del Módulo de Catálogo
 builder.Services.AddDbContext<CatalogDbContext>(options =>
     options.UseNpgsql(connectionString, b => b.MigrationsAssembly("TractorEcommerce.Modules.Catalog.Infrastructure")));
-
-// Registrar DbContext del Módulo de Ventas
-builder.Services.AddDbContext<SalesDbContext>(options =>
-    options.UseNpgsql(connectionString, b => b.MigrationsAssembly("TractorEcommerce.Modules.Sales.Infrastructure")));
+;
 
 // NUEVO: Registrar DbContext del Módulo de Órdenes (Siguiendo tu patrón)
 builder.Services.AddDbContext<TractorEcommerce.Modules.Order.Infrastructure.Data.OrderDbContext>(options =>
@@ -42,7 +36,9 @@ builder.Services.AddDbContext<TractorEcommerce.Modules.Cart.Infrastructure.Data.
 // ==========================================
 // Productor (Emisor de eventos)
 builder.Services.AddSingleton<IEventBus, KafkaEventBus>();
-
+builder.Services.AddHostedService<CatalogProductSyncedConsumer>();
+builder.Services.AddHostedService<OrderPlacedConsumer>();
+builder.Services.AddHostedService<InventoryResponseConsumer>();
 // Consumidor (Receptor en segundo plano)
 builder.Services.AddHostedService<KafkaOrderConsumer>();
 
@@ -78,10 +74,6 @@ builder.Services.AddScoped<TractorEcommerce.Modules.Inventory.Application.Interf
 
 // Registrar Casos de Uso de Inventario
 builder.Services.AddScoped<TractorEcommerce.Modules.Inventory.Application.UseCase.DeductStockOnOrderPlacedUseCase>();
-builder.Services.AddScoped<ISalesRepository, SqlSalesRepository>();
-builder.Services.AddScoped<IInventoryService, SqlInventoryService>();
-builder.Services.AddScoped<ICatalogService, CatalogService>();
-
 //cart
 builder.Services.AddScoped<TractorEcommerce.Modules.Cart.Application.Interfaces.Repository.ICartRepository, TractorEcommerce.Modules.Cart.Infrastructure.Repository.CartRepository>();
 
@@ -118,9 +110,6 @@ using (var scope = app.Services.CreateScope())
     {
         var catalogContext = services.GetRequiredService<CatalogDbContext>();
         await catalogContext.Database.MigrateAsync();
-
-        var salesContext = services.GetRequiredService<SalesDbContext>();
-        await salesContext.Database.MigrateAsync();
     }
     catch (Exception ex)
     {
