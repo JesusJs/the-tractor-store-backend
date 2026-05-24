@@ -497,3 +497,4 @@ $RECYCLE.BIN/
 .db-data/
 postgres-data/
 data/
+/coverage-results/html-report
