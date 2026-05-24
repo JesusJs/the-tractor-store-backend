@@ -2,6 +2,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Application\TractorEcommerce.Modules.Cart.Application.csproj" />
+    <ProjectReference Include="..\Domain\TractorEcommerce.Modules.Cart.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
   </ItemGroup>
 
   <PropertyGroup>
