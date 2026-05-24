@@ -47,6 +47,8 @@ builder.Services.AddSingleton<IEventBus, KafkaEventBus>();
 builder.Services.AddHostedService<KafkaOrderConsumer>();
 
 
+// Levanta el hilo de escucha de Kafka para el Carrito en segundo plano
+builder.Services.AddHostedService<TractorEcommerce.Modules.Cart.Infrastructure.Messaging.OrderPlacedConsumer>();
 // ==========================================
 // 3. SEGURIDAD (JWT) Y CORS
 // ==========================================
@@ -71,7 +73,7 @@ builder.Services.AddScoped<ICatalogRepository, TractorEcommerce.Modules.Catalog.
 builder.Services.AddScoped<TractorEcommerce.Modules.Order.Application.Interfaces.Repository.IOrderRepository, TractorEcommerce.Modules.Order.Infrastructure.Repository.OrderRepository>();
 
 // Casos de Uso de Order (Si los necesitas directo en controladores o handlers)
-builder.Services.AddScoped<TractorEcommerce.Modules.Order.Application.UseCase.CreateOrderFromCheckoutUseCase>();
+builder.Services.AddScoped<TractorEcommerce.Modules.Order.Application.UseCase.CheckoutUseCase>();
 builder.Services.AddScoped<TractorEcommerce.Modules.Inventory.Application.Interfaces.Repository.IInventoryRepository, TractorEcommerce.Modules.Inventory.Infrastructure.Repository.InventoryRepository>();
 
 // Registrar Casos de Uso de Inventario
