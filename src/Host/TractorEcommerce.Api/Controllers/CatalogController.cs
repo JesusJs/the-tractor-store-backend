@@ -1,47 +1,61 @@
-﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TractorEcommerce.Modules.Catalog.Application.Ports;
+using TractorEcommerce.Modules.Catalog.Domain.Entities;
 using static TractorEcommerce.Modules.Catalog.Application.DTOs.CatalogDtos;
 
 namespace TractorEcommerce.Api.Controllers
 {
     [ApiController]
     [Route("api/catalog")]
-    [Authorize]
-    public class CatalogController: ControllerBase
+    public class CatalogController : ControllerBase
     {
-        private static readonly List<ProductItemDto> MockProducts = new()
+        private readonly ICatalogRepository _catalogRepository;
+
+        public CatalogController(ICatalogRepository catalogRepository)
         {
-            new ProductItemDto(
-                "tx-001", "Autonomous Titan", "TractorCorp", 85000,
-                "https://placehold.co/600x400/png?text=Autonomous+Titan",
-                new[] { "TX-001-GPS", "TX-001-AI" },
-                "Premium autonomous driving tractor.", "240 HP", 9
-            ),
-            new ProductItemDto(
-                "tx-002", "Classic Vintage 1950", "HeritageIron", 45000,
-                "https://placehold.co/600x400/png?text=Classic+Vintage",
-                new[] { "TX-CLS-01" },
-                "Beautifully restored post-war utility tractor.", "45 HP", 2
-            )
-         };
+            _catalogRepository = catalogRepository;
+        }
 
         [HttpGet("home")]
-        public ActionResult GetHome()
+        public ActionResult<IEnumerable<TeaserDto>> GetHome()
         {
-            var response = new { message = "Hola Mundo" };
-            return Ok(response);
+            var teasers = new List<TeaserDto>
+            {
+                new TeaserDto(
+                    Id: "teaser-classics",
+                    Title: "Classic Vintage Tractors",
+                    Image: "https://placehold.co/600x400/png?text=Classic+Vintage",
+                    Filter: "classics"
+                ),
+                new TeaserDto(
+                    Id: "teaser-autonomous",
+                    Title: "Autonomous & AI Tractors",
+                    Image: "https://placehold.co/600x400/png?text=Autonomous+Titan",
+                    Filter: "autonomous"
+                )
+            };
+            return Ok(teasers);
         }
 
         [HttpGet("categories/{filter}")]
-        public ActionResult<CatalogCategoryDto> GetCategory(string filter)
+        public async Task<ActionResult<CatalogCategoryDto>> GetCategory(string filter)
         {
-            var filteredProducts = filter.ToLower() == "all"
-                ? MockProducts
-                : MockProducts.Where(p => p.Description.ToLower().Contains(filter.ToLower()) || filter.ToLower() == "autonomous" && p.Id == "tx-001" || filter.ToLower() == "classics" && p.Id == "tx-002");
+            var products = await _catalogRepository.GetByCategoryAsync(filter);
+            var productDtos = products.Select(p => new ProductItemDto(
+                Id: p.Id,
+                Name: p.Name,
+                Brand: p.Brand,
+                Price: p.Price,
+                Image: p.Image,
+                Variants: p.Variants.Select(v => v.Sku).ToList(),
+                Description: p.Description,
+                EnginePower: p.EnginePower,
+                Stock: p.Variants.Sum(v => v.Stock)
+            )).ToList();
 
             var response = new CatalogCategoryDto(
                 Category: filter,
-                Products: filteredProducts,
+                Products: productDtos,
                 AvailableFilters: new[] { "all", "classics", "autonomous" }
             );
 
@@ -49,9 +63,9 @@ namespace TractorEcommerce.Api.Controllers
         }
 
         [HttpGet("products/{id}")]
-        public ActionResult<ProductDetailDto> GetProduct(string id)
+        public async Task<ActionResult<ProductDetailDto>> GetProduct(string id)
         {
-            var prod = MockProducts.FirstOrDefault(p => p.Id == id);
+            var prod = await _catalogRepository.GetByIdAsync(id);
             if (prod == null) return NotFound(new { message = $"Producto {id} no encontrado." });
 
             var detail = new ProductDetailDto(
@@ -61,28 +75,74 @@ namespace TractorEcommerce.Api.Controllers
                 Price: prod.Price,
                 Image: prod.Image,
                 Description: prod.Description,
-                Variants: prod.Variants,
-                Highlights: new[]
-                {
-            "GPS Guided Autonomous System",
-            $"{prod.EnginePower ?? "Standard"} High-Performance Power",
-            "Dynamic Torque Control & Field Optimization",
-            "Full Warranty & physical maintenance support included"
-                }
+                Variants: prod.Variants.Select(v => v.Sku).ToList(),
+                Highlights: prod.Highlights.ToList()
             );
 
             return Ok(detail);
         }
 
-        [HttpGet("stores")]
-        public ActionResult<IEnumerable<object>> GetStores()
+        [HttpGet("recommendations")]
+        public async Task<ActionResult<IEnumerable<ProductItemDto>>> GetRecommendations([FromQuery] string? skus)
         {
-            var stores = new[]
+            IEnumerable<Product> recommendedProducts;
+            if (string.IsNullOrWhiteSpace(skus))
             {
-        new { id = "store-central", name = "Central Headquarters", address = "Av. de la Maquinaria 404", city = "Madrid", image = "https://placehold.co/300x200" },
-        new { id = "store-north", name = "North Hub", address = "Industrial Route 66, Km 12", city = "Burgos", image = "https://placehold.co/300x200" }
-    };
-            return Ok(stores);
+                recommendedProducts = await _catalogRepository.GetByCategoryAsync("all");
+            }
+            else
+            {
+                var skuList = skus.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var matchedProducts = await _catalogRepository.GetProductsBySkusAsync(skuList);
+
+                if (matchedProducts.Any())
+                {
+                    var categories = matchedProducts.Select(p => p.Category).Distinct().ToList();
+                    var allOfSameCategories = new List<Product>();
+                    foreach (var category in categories)
+                    {
+                        var prods = await _catalogRepository.GetByCategoryAsync(category);
+                        allOfSameCategories.AddRange(prods);
+                    }
+                    
+                    recommendedProducts = allOfSameCategories
+                        .Where(p => !matchedProducts.Any(mp => mp.Id == p.Id))
+                        .DistinctBy(p => p.Id);
+                }
+                else
+                {
+                    recommendedProducts = await _catalogRepository.GetByCategoryAsync("all");
+                }
+            }
+
+            var dtos = recommendedProducts.Select(p => new ProductItemDto(
+                Id: p.Id,
+                Name: p.Name,
+                Brand: p.Brand,
+                Price: p.Price,
+                Image: p.Image,
+                Variants: p.Variants.Select(v => v.Sku).ToList(),
+                Description: p.Description,
+                EnginePower: p.EnginePower,
+                Stock: p.Variants.Sum(v => v.Stock)
+            )).ToList();
+
+            return Ok(dtos);
+        }
+
+        [HttpGet("stores")]
+        public async Task<ActionResult<IEnumerable<object>>> GetStores()
+        {
+            var stores = await _catalogRepository.GetStoresAsync();
+            var response = stores.Select(s => new
+            {
+                id = s.Id,
+                name = s.Name,
+                address = s.Address,
+                city = s.City,
+                image = s.Image
+            });
+            return Ok(response);
         }
     }
 }
