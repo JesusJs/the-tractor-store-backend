@@ -115,10 +115,15 @@ using (var scope = app.Services.CreateScope())
 // ==========================================
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
-//if (app.Environment.IsDevelopment())
-//{
-//    app.MapOpenApi();
-//}
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "Tractor Store API v1");
+        options.RoutePrefix = "swagger"; // La URL será: http://localhost:YOUR_PORT/swagger
+    });
+}
 
 //app.UseHttpsRedirection();
 
