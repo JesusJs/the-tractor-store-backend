@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Net.NetworkInformation;
 using System.Text;
 using TractorEcommerce.Modules.Order.Application.DTOs;
 using TractorEcommerce.Modules.Order.Application.Interfaces.Repository;
@@ -48,7 +49,8 @@ namespace TractorEcommerce.Modules.Order.Application.UseCase
                 SubTotal: subTotal,
                 Tax: tax,
                 Total: total,
-                PlacedAt: DateTime.UtcNow
+                PlacedAt: DateTime.UtcNow,
+                Status: "Pending"
             );
 
             // 1. Guardar de forma aislada en el esquema 'ordering'

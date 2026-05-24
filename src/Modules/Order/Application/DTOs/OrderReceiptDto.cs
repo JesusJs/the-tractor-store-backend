@@ -5,12 +5,12 @@ using System.Text;
 namespace TractorEcommerce.Modules.Order.Application.DTOs
 {
     public record OrderPayloadDto(
-      string FirstName,
-      string LastName,
-      string StoreId,
-      string? ExtraPickups,
-      List<OrderPayloadItemDto> Items
-  );
+         string FirstName,
+         string LastName,
+         string StoreId,
+         string? ExtraPickups,
+         List<OrderPayloadItemDto> Items
+     );
 
     public record OrderPayloadItemDto(
         string ProductId,
@@ -22,18 +22,20 @@ namespace TractorEcommerce.Modules.Order.Application.DTOs
         string? Image
     );
 
+    // 🚀 MODIFICADO: Agregamos string Status al final de los parámetros
     public record OrderReceiptDto(
-        string Id,
-        string FirstName,
-        string LastName,
-        string StoreId,
-        string? ExtraPickups,
-        List<OrderItemDetailDto> Items,
-        decimal SubTotal,
-        decimal Tax,
-        decimal Total,
-        DateTime PlacedAt
-    );
+    string Id,
+    string FirstName,
+    string LastName,
+    string StoreId,
+    string? ExtraPickups,
+    List<OrderItemDetailDto> Items,
+    decimal SubTotal,
+    decimal Tax,
+    decimal Total,
+    DateTime PlacedAt,
+    string Status
+);
 
     public record OrderItemDetailDto(
         string ProductId,
