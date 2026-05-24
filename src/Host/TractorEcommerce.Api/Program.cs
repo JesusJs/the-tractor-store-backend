@@ -1,8 +1,45 @@
+using Microsoft.EntityFrameworkCore;
+using TractorEcommerce.Api.Extensions;
+using TractorEcommerce.Modules.Catalog.Infrastructure.Events.Messaging;
+using TractorEcommerce.Modules.Catalog.Infrastructure.Messaging;
+using TractorEcommerce.Modules.Catalog.Infrastructure.Persistence;
+using TractorEcommerce.Modules.Sales.Application.Handler; // Asegúrate de que tu CheckoutCommandHandler esté aquí
+using TractorEcommerce.Modules.Sales.Application.Interfaces.Repository;
+using TractorEcommerce.Modules.Sales.Application.Interfaces.Service;
+using TractorEcommerce.Modules.Sales.Infrastructure.Persistence;
+using TractorEcommerce.Modules.Sales.Infrastructure.Repository;
+using TractorEcommerce.Modules.Shared.Application.Events;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// ==========================================
+// 1. CONFIGURACIÓN DE PERSISTENCIA (POSTGRES)
+// ==========================================
+var connectionString = builder.Configuration.GetConnectionString("PostgresConnection");
+
+// Registrar DbContext del Módulo de Catálogo
+builder.Services.AddDbContext<CatalogDbContext>(options =>
+    options.UseNpgsql(connectionString, b => b.MigrationsAssembly("TractorEcommerce.Modules.Catalog.Infrastructure")));
+
+// Registrar DbContext del Módulo de Ventas
+builder.Services.AddDbContext<SalesDbContext>(options =>
+    options.UseNpgsql(connectionString, b => b.MigrationsAssembly("TractorEcommerce.Modules.Sales.Infrastructure")));
+
+
+// ==========================================
+// 2. CONFIGURACIÓN DE KAFKA (MESSAGING)
+// ==========================================
+// Productor (Emisor de eventos)
+builder.Services.AddSingleton<IEventBus, KafkaEventBus>();
+
+// Consumidor (Receptor en segundo plano)
+builder.Services.AddHostedService<KafkaOrderConsumer>();
+
+
+// ==========================================
+// 3. SEGURIDAD (JWT) Y CORS
+// ==========================================
+builder.Services.AddJwtAuthentication(builder.Configuration);
 
 builder.Services.AddCors(options =>
 {
@@ -14,26 +51,30 @@ builder.Services.AddCors(options =>
     });
 });
 
+
+// ==========================================
+// 4. ARQUITECTURA HEXAGONAL / INYECCIÓN DE DEPENDENCIAS
+// ==========================================
+// NOTA: Cuando termines tus repositorios reales de EF Core, cambiarás 'MemorySalesRepository' por 'SqlSalesRepository' aquí:
+builder.Services.AddScoped<ISalesRepository, MemorySalesRepository>();
+builder.Services.AddScoped<IInventoryService, MemoryInventoryService>();
+
+// Casos de Uso (Handlers)
+builder.Services.AddScoped<CheckoutCommandHandler>();
+
+
+// ==========================================
+// 5. SERVICIOS DEL SISTEMA / OPENAPI
+// ==========================================
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? "Host=localhost;Database=tractor_ecommerce_db;Username=tractor_admin;Password=tractor_password";
-
-builder.Services.AddDbContext<CatalogDbContext>(options =>
-    options.UseNpgsql(connectionString));
-
-// 3. Registrar Infraestructura Compartida
-builder.Services.AddSingleton<IEventBus, KafkaEventBus>();
-
-// 4. Agregar Seguridad (JWT)
-builder.Services.AddJwtAuthentication(builder.Configuration);
-
+builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ==========================================
+// PIPELINE DE PETICIONES HTTP (MIDDLEWARES)
+// ==========================================
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -41,24 +82,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+// El orden de estos 3 middlewares es de vida o muerte:
 app.UseCors("MfeCorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -66,8 +90,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
