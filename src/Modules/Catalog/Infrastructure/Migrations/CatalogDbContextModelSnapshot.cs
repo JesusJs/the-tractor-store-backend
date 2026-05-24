@@ -70,27 +70,279 @@ namespace TractorEcommerce.Modules.Catalog.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "tx-001",
-                            Brand = "TractorCorp",
+                            Id = "AU-04",
+                            Brand = "TractorStore Autonomous",
                             Category = "autonomous",
-                            Description = "Premium autonomous driving tractor.",
-                            EnginePower = "240 HP",
-                            Highlights = new[] { "GPS Guided Autonomous System", "240 HP High-Performance Power", "Dynamic Torque Control & Field Optimization", "Full Warranty & physical maintenance support included" },
-                            Image = "https://placehold.co/600x400/png?text=Autonomous+Titan",
-                            Name = "Autonomous Titan",
-                            Price = 85000m
+                            Description = "Unidad autónoma de alta gama impulsada por paneles solares integrados y un banco de baterías Sapphire Core. Diseñado para optimizar ciclos de cultivo continuos en grandes extensiones.",
+                            EnginePower = "460 HP",
+                            Highlights = new[] { "Alimentación fotovoltaica avanzada", "Mapeo topográfico inteligente", "Autonomía extendida 48h" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/AU-04-RD.webp",
+                            Name = "Sapphire Sunworker 460R",
+                            Price = 8500.00m
                         },
                         new
                         {
-                            Id = "tx-002",
-                            Brand = "HeritageIron",
-                            Category = "classics",
-                            Description = "Beautifully restored post-war utility tractor.",
-                            EnginePower = "45 HP",
-                            Highlights = new[] { "Standard High-Performance Power", "Full Warranty & physical maintenance support included" },
-                            Image = "https://placehold.co/600x400/png?text=Classic+Vintage",
-                            Name = "Classic Vintage 1950",
-                            Price = 45000m
+                            Id = "CL-08",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "Tractor utilitario compacto de alta maniobrabilidad. Su diseño optimizado le permite trabajar eficientemente tanto en huertos cerrados como en invernaderos tecnificados.",
+                            EnginePower = "95 HP",
+                            Highlights = new[] { "Chasis ultracompacto", "Radio de giro cero", "Bajo consumo de combustible" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-08-GR.webp",
+                            Name = "Holland Hamster",
+                            Price = 7750.00m
+                        },
+                        new
+                        {
+                            Id = "CL-13",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "La combinación perfecta entre velocidad de transporte terrestre y fuerza de toma de fuerza (PTO). Ideal para operaciones mixtas que requieren desplazamientos constantes.",
+                            EnginePower = "180 HP",
+                            Highlights = new[] { "Transmisión Syncro-Fast", "Suspensión de cabina neumática", "Velocidad máxima optimizada" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-13-BL.webp",
+                            Name = "Rapid Racer",
+                            Price = 7500.00m
+                        },
+                        new
+                        {
+                            Id = "CL-15",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "El caballo de batalla tradicional de la marca. Mecánica 100% analógica de fácil mantenimiento, construida para resistir las condiciones climáticas más hostiles del entorno.",
+                            EnginePower = "210 HP",
+                            Highlights = new[] { "Motor diésel de aspiración natural", "Cero componentes electrónicos críticos", "Tracción integral bloqueable" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-15-PI.webp",
+                            Name = "Fieldmaster Classic",
+                            Price = 6200.00m
+                        },
+                        new
+                        {
+                            Id = "CL-01",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "Maquinaria pesada inspirada en los diseños industriales clásicos pero con un tren motriz modernizado. Fiabilidad estructural garantizada para labranza profunda.",
+                            EnginePower = "165 HP",
+                            Highlights = new[] { "Estructura de fundición nodular", "Bomba hidráulica de flujo constante", "Cabina panorámica clásica" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-01-GR.webp",
+                            Name = "Heritage Workhorse",
+                            Price = 5700.00m
+                        },
+                        new
+                        {
+                            Id = "AU-08",
+                            Brand = "TractorStore Autonomous",
+                            Category = "autonomous",
+                            Description = "Tractor robótico diseñado para reconocimiento inicial, preparación de camas de siembra y análisis de suelo en tiempo real mediante sensores integrados.",
+                            EnginePower = "130 HP",
+                            Highlights = new[] { "Escaner de suelo por conductividad", "Navegación RTK de precisión centimétrica", "Chasis ligero antipinchazos" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/AU-08-WH.webp",
+                            Name = "Field Pioneer",
+                            Price = 4500.00m
+                        },
+                        new
+                        {
+                            Id = "AU-02",
+                            Brand = "TractorStore Autonomous",
+                            Category = "autonomous",
+                            Description = "Unidad de alta potencia totalmente automatizada capaz de coordinar flotas de implementos dependientes mediante telemetría machine-to-machine.",
+                            EnginePower = "380 HP",
+                            Highlights = new[] { "Procesamiento IA perimetral", "Doble antena satelital", "Sistema hidráulico inteligente" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/AU-02-OG.webp",
+                            Name = "SmartFarm Titan",
+                            Price = 4000.00m
+                        },
+                        new
+                        {
+                            Id = "AU-07",
+                            Brand = "TractorStore Autonomous",
+                            Category = "autonomous",
+                            Description = "Especializado en operaciones de cultivos ecológicos y mantenimiento de cobertura vegetal sin intervención humana directa. Silencioso y eficiente.",
+                            EnginePower = "120 HP",
+                            Highlights = new[] { "Transmisión eléctrica eco-drive", "Sensores multiespectrales", "Carga rápida inductiva" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/AU-07-MT.webp",
+                            Name = "Verde Voyager",
+                            Price = 4000.00m
+                        },
+                        new
+                        {
+                            Id = "AU-05",
+                            Brand = "TractorStore Autonomous",
+                            Category = "autonomous",
+                            Description = "Diseñado específicamente para la pulverización selectiva y dosificación de precisión. Reduce drásticamente el uso de insumos químicos mediante análisis de imagen.",
+                            EnginePower = "150 HP",
+                            Highlights = new[] { "Detección de malezas por visión artificial", "Tanque presurizado inteligente", "Control de secciones boquilla a boquilla" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/AU-05-ZH.webp",
+                            Name = "EcoGrow Crop Commander",
+                            Price = 3400.00m
+                        },
+                        new
+                        {
+                            Id = "CL-12",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "Tractor ágil ideal para tareas diarias de logística interna en la finca, transporte de forraje y remolques medianos.",
+                            EnginePower = "110 HP",
+                            Highlights = new[] { "Transmisión Powershift ágil", "Cabina ergonómica certificada", "Frenos de disco en baño de aceite" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-12-BL.webp",
+                            Name = "Celerity Cruiser",
+                            Price = 3200.00m
+                        },
+                        new
+                        {
+                            Id = "CL-11",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "Preparado con aislamiento térmico reforzado de fábrica y sistemas de precalentamiento de motor para trabajar en los inviernos y terrenos más exigentes.",
+                            EnginePower = "140 HP",
+                            Highlights = new[] { "Paquete invernal ártico", "Calefacción de cabina auxiliar", "Alternador de alta capacidad" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-11-SK.webp",
+                            Name = "Scandinavia Sower",
+                            Price = 3100.00m
+                        },
+                        new
+                        {
+                            Id = "CL-09",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "Un clásico del diseño europeo, configurado con un centro de gravedad bajo especial para viñedos y cultivos en laderas o terrenos escarpados.",
+                            EnginePower = "100 HP",
+                            Highlights = new[] { "Centro de gravedad bajo", "Estabilidad lateral mejorada", "Eje delantero oscilante" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-09-BL.webp",
+                            Name = "TerraFirma Veneto",
+                            Price = 2950.00m
+                        },
+                        new
+                        {
+                            Id = "CL-07",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "Enfocado en pasturas y ganadería. Su sistema hidráulico trasero tiene una excelente relación de levante para acoplar segadoras y rotoempacadoras.",
+                            EnginePower = "125 HP",
+                            Highlights = new[] { "Toma de fuerza multidisco", "Control de profundidad mecánico", "Estructura antivuelco ROPS" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-07-GR.webp",
+                            Name = "Greenland Rover",
+                            Price = 2900.00m
+                        },
+                        new
+                        {
+                            Id = "CL-06",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "Construcción sólida y duradera con enfoque en la eficiencia del operador a largo plazo. Un equipo confiable año tras año.",
+                            EnginePower = "135 HP",
+                            Highlights = new[] { "Motor de alto torque a bajas RPM", "Dirección hidrostática", "Mantenimiento simplificado" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-06-MT.webp",
+                            Name = "Danamark Steadfast",
+                            Price = 2800.00m
+                        },
+                        new
+                        {
+                            Id = "CL-05",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "Ideal para medianos productores que buscan la fuerza de un tractor grande sin perder la versatilidad de un chasis estándar.",
+                            EnginePower = "150 HP",
+                            Highlights = new[] { "Excelente relación peso-potencia", "Inversor electrohidráulico", "Capacidad de levante trasera aumentada" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-05-PT.webp",
+                            Name = "Countryside Commander",
+                            Price = 2700.00m
+                        },
+                        new
+                        {
+                            Id = "CL-02",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "Diseñado para tareas agrícolas generales y operaciones ganaderas. Cuenta con un sistema hidráulico modular altamente configurable.",
+                            EnginePower = "115 HP",
+                            Highlights = new[] { "Mandos finales planetarios", "Asiento con suspensión mecánica", "Salidas hidráulicas duales" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-02-BL.webp",
+                            Name = "Falcon Crest Farm",
+                            Price = 2600.00m
+                        },
+                        new
+                        {
+                            Id = "CL-10",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "Configuración versátil estandarizada para mercados globales. Fácil operación y alta disponibilidad de componentes de recambio.",
+                            EnginePower = "120 HP",
+                            Highlights = new[] { "Chasis de alta resistencia", "Filtro de aire de doble elemento", "Panel de instrumentos intuitivo" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-10-SD.webp",
+                            Name = "Global Gallant",
+                            Price = 2600.00m
+                        },
+                        new
+                        {
+                            Id = "CL-03",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "Variación enfocada al trabajo pesado en granja, cargadores frontales y movimiento de tierras ligero dentro del predio.",
+                            EnginePower = "110 HP",
+                            Highlights = new[] { "Eje delantero reforzado", "Preinstalación para pala cargadora", "Embrague cerámico reforzado" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-03-GR.webp",
+                            Name = "Falcon Crest Work",
+                            Price = 2300.00m
+                        },
+                        new
+                        {
+                            Id = "CL-14",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "Diseño con protección anticorrosiva especial para zonas tropicales de alta humedad o plantaciones costeras de caña y arroz.",
+                            EnginePower = "105 HP",
+                            Highlights = new[] { "Pintura con protección marina epóxica", "Sello de protección en rodamientos", "Radiador tropicalizado" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-14-GR.webp",
+                            Name = "Caribbean Cruiser",
+                            Price = 2300.00m
+                        },
+                        new
+                        {
+                            Id = "CL-04",
+                            Brand = "TractorStore Classic",
+                            Category = "classic",
+                            Description = "Tractor compacto y económico de bajo costo operativo, perfecto para pequeñas parcelas familiares o como soporte secundario.",
+                            EnginePower = "85 HP",
+                            Highlights = new[] { "Consumo mínimo de diésel", "Fácil acceso a puntos de servicio", "Dimensiones reducidas" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/CL-04-BL.webp",
+                            Name = "Broadfield Majestic",
+                            Price = 2200.00m
+                        },
+                        new
+                        {
+                            Id = "AU-06",
+                            Brand = "TractorStore Autonomous",
+                            Category = "autonomous",
+                            Description = "Módulo autónomo especializado en patrullaje, mapeo de salud de cultivos mediante cámaras RGB e infrarrojas e índices NDVI.",
+                            EnginePower = "90 HP",
+                            Highlights = new[] { "Cámara multiespectral integrada", "Transmisión de datos 5G/Radio", "Batería de estado sólido" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/AU-06-CZ.webp",
+                            Name = "FarmFleet Sovereign",
+                            Price = 2100.00m
+                        },
+                        new
+                        {
+                            Id = "AU-03",
+                            Brand = "TractorStore Autonomous",
+                            Category = "autonomous",
+                            Description = "Pequeño rover autónomo multitarea, excelente para pasar entre hileras estrechas ejecutando desmalezado mecánico localizado.",
+                            EnginePower = "75 HP",
+                            Highlights = new[] { "Navegación por visión estereoscópica", "Herramientas de desmalezado intercambiables", "Bajo impacto de pisada" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/AU-03-TQ.webp",
+                            Name = "FutureHarvest Navigator",
+                            Price = 1600.00m
+                        },
+                        new
+                        {
+                            Id = "AU-01",
+                            Brand = "TractorStore Autonomous",
+                            Category = "autonomous",
+                            Description = "Micro-unidad autónoma de entrada orientada a la automatización de tareas repetitivas a escala micro-agrícola o parcelas de prueba.",
+                            EnginePower = "50 HP",
+                            Highlights = new[] { "Motorización eléctrica síncrona", "Programación abierta por bloques", "Arquitectura ligera modular" },
+                            Image = "https://blueprint.the-tractor.store/cdn/img/product/200/AU-01-SI.webp",
+                            Name = "TerraFirma AutoCultivator T-300",
+                            Price = 1000.00m
                         });
                 });
 
@@ -123,27 +375,43 @@ namespace TractorEcommerce.Modules.Catalog.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Sku = "TX-001-GPS",
-                            ProductId = "tx-001",
-                            Stock = 8,
-                            name = "GPS Edition",
-                            product_id = "tx-001"
-                        },
-                        new
-                        {
-                            Sku = "TX-001-AI",
-                            ProductId = "tx-001",
+                            Sku = "AU04-STD",
+                            ProductId = "AU-04",
                             Stock = 3,
-                            name = "AI Edition",
-                            product_id = "tx-001"
+                            name = "Standard Sapphire Core",
+                            product_id = "AU-04"
                         },
                         new
                         {
-                            Sku = "TX-CLS-01",
-                            ProductId = "tx-002",
+                            Sku = "CL08-STD",
+                            ProductId = "CL-08",
+                            Stock = 8,
+                            name = "Standard Wheels",
+                            product_id = "CL-08"
+                        },
+                        new
+                        {
+                            Sku = "CL13-FAST",
+                            ProductId = "CL-13",
+                            Stock = 2,
+                            name = "High Speed Axle Kit",
+                            product_id = "CL-13"
+                        },
+                        new
+                        {
+                            Sku = "CL15-HD",
+                            ProductId = "CL-15",
+                            Stock = 5,
+                            name = "Heavy Duty Iron Pack",
+                            product_id = "CL-15"
+                        },
+                        new
+                        {
+                            Sku = "AU02-XL",
+                            ProductId = "AU-02",
                             Stock = 0,
-                            name = "Standard Edition",
-                            product_id = "tx-002"
+                            name = "Dual Antenna Pro Pack",
+                            product_id = "AU-02"
                         });
                 });
 
@@ -180,19 +448,35 @@ namespace TractorEcommerce.Modules.Catalog.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "store-central",
-                            Address = "Av. de la Maquinaria 404",
-                            City = "Madrid",
-                            Image = "https://placehold.co/300x200",
-                            Name = "Central Headquarters"
+                            Id = "store-aurora",
+                            Address = "Astronaut Way 1",
+                            City = "Arlington",
+                            Image = "https://blueprint.the-tractor.store/cdn/img/store/200/store-1.webp",
+                            Name = "Aurora Flagship Store"
                         },
                         new
                         {
-                            Id = "store-north",
-                            Address = "Industrial Route 66, Km 12",
-                            City = "Burgos",
-                            Image = "https://placehold.co/300x200",
-                            Name = "North Hub"
+                            Id = "store-big-micro",
+                            Address = "Broadway 2",
+                            City = "Burlington",
+                            Image = "https://blueprint.the-tractor.store/cdn/img/store/200/store-2.webp",
+                            Name = "Big Micro Machines"
+                        },
+                        new
+                        {
+                            Id = "store-central",
+                            Address = "Clown Street 3",
+                            City = "Cryo",
+                            Image = "https://blueprint.the-tractor.store/cdn/img/store/200/store-3.webp",
+                            Name = "Central Mall"
+                        },
+                        new
+                        {
+                            Id = "store-downtown",
+                            Address = "Duck Street 4",
+                            City = "Davenport",
+                            Image = "https://blueprint.the-tractor.store/cdn/img/store/200/store-4.webp",
+                            Name = "Downtown Model Store"
                         });
                 });
 
