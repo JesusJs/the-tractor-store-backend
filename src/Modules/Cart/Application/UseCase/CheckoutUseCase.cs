@@ -44,10 +44,6 @@ namespace TractorEcommerce.Modules.Cart.Application.UseCase
                 TotalAmount: cart.TotalAmount
             );
 
-            // CONFIGURACIÓN DE PARÁMETROS PARA TU INTERFAZ:
-            // Parámetro 1 (string topic): "checkout-requested-topic"
-            // Parámetro 2 (string key): cart.Id  <-- Usamos el Id del carrito como llave de partición en Kafka
-            // Parámetro 3 (T message): checkoutEvent
             await _eventBus.PublishAsync("checkout-requested-topic", cart.Id, checkoutEvent);
 
             _logger.LogInformation("CheckoutRequestedEvent publicado exitosamente en Kafka para el carrito: {CartId}", cartId);

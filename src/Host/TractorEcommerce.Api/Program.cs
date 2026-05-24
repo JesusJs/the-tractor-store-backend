@@ -34,6 +34,9 @@ builder.Services.AddDbContext<TractorEcommerce.Modules.Order.Infrastructure.Data
 builder.Services.AddDbContext<TractorEcommerce.Modules.Inventory.Infrastructure.Data.InventoryDbContext>(options =>
     options.UseNpgsql(connectionString, b => b.MigrationsAssembly("TractorEcommerce.Modules.Inventory.Infrastructure")));
 
+builder.Services.AddDbContext<TractorEcommerce.Modules.Cart.Infrastructure.Data.CartDbContext>(options =>
+    options.UseNpgsql(connectionString, b => b.MigrationsAssembly("TractorEcommerce.Modules.Cart.Infrastructure")));
+
 // ==========================================
 // 2. CONFIGURACIÓN DE KAFKA (MESSAGING)
 // ==========================================
@@ -77,6 +80,9 @@ builder.Services.AddScoped<ISalesRepository, SqlSalesRepository>();
 builder.Services.AddScoped<IInventoryService, SqlInventoryService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
 
+//cart
+builder.Services.AddScoped<TractorEcommerce.Modules.Cart.Application.Interfaces.Repository.ICartRepository, TractorEcommerce.Modules.Cart.Infrastructure.Repository.CartRepository>();
+
 // Catalog Use Cases
 builder.Services.AddScoped<GetHomeTeasersUseCase>();
 builder.Services.AddScoped<GetCatalogCategoryUseCase>();
@@ -86,12 +92,9 @@ builder.Services.AddScoped<GetStoresUseCase>();
 builder.Services.AddScoped<GetInventoryStatusUseCase>();
 
 // Sales Use Cases
-builder.Services.AddScoped<CheckoutUseCase>();
-builder.Services.AddScoped<AddToCartUseCase>();
-builder.Services.AddScoped<RemoveFromCartUseCase>();
-builder.Services.AddScoped<GetCartUseCase>();
-builder.Services.AddScoped<GetMiniCartUseCase>();
-builder.Services.AddScoped<GetOrderByIdUseCase>();
+builder.Services.AddScoped<TractorEcommerce.Modules.Cart.Application.UseCase.AddToCartUseCase>();
+builder.Services.AddScoped<TractorEcommerce.Modules.Cart.Application.UseCase.GetCartUseCase>();
+builder.Services.AddScoped<TractorEcommerce.Modules.Cart.Application.UseCase.RemoveFromCartUseCase>();
 
 
 // ==========================================
