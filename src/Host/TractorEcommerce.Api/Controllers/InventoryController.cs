@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using TractorEcommerce.Modules.Catalog.Application.Ports;
+using TractorEcommerce.Modules.Catalog.Application.UseCase;
 using static TractorEcommerce.Modules.Catalog.Application.DTOs.CatalogDtos;
 
 namespace TractorEcommerce.Api.Controllers
@@ -8,23 +8,23 @@ namespace TractorEcommerce.Api.Controllers
     [Route("api/inventory")]
     public class InventoryController : ControllerBase
     {
-        private readonly ICatalogRepository _catalogRepository;
+        private readonly GetInventoryStatusQueryHandler _getInventoryStatusHandler;
 
-        public InventoryController(ICatalogRepository catalogRepository)
+        public InventoryController(GetInventoryStatusQueryHandler getInventoryStatusHandler)
         {
-            _catalogRepository = catalogRepository;
+            _getInventoryStatusHandler = getInventoryStatusHandler;
         }
 
         [HttpGet("{sku}")]
         public async Task<ActionResult<InventoryStatusDto>> GetInventory(string sku)
         {
-            var variant = await _catalogRepository.GetVariantBySkuAsync(sku);
-            if (variant == null)
+            var status = await _getInventoryStatusHandler.ExecuteAsync(sku);
+            if (status == null)
             {
                 return NotFound(new { message = $"SKU {sku} no localizado en inventario." });
             }
 
-            return Ok(new InventoryStatusDto(sku, variant.Stock));
+            return Ok(status);
         }
     }
 }
