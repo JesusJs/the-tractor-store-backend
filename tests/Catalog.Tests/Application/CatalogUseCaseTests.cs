@@ -334,5 +334,114 @@ namespace TractorEcommerce.Modules.Catalog.Tests.Application
             Assert.Single(result);
             Assert.Equal("tx-5", result[0].Id);
         }
+
+        [Fact]
+        public async Task Execute_WithNonMatchingSkus_ReturnsFallbackAll()
+        {
+            // Arrange — skus that don't match any product
+            var skus = "UNKNOWN-SKU";
+            _repo.GetProductsBySkusAsync(Arg.Any<IEnumerable<string>>())
+                 .Returns(new List<Product>()); // no match
+
+            var fallbackProduct = new Product("tx-fb", "Fallback Tractor", "FallbackBrand", 20000, "img-fb", "Desc-fb", "all");
+            fallbackProduct.AddVariant("TX-FB-STD", 1);
+            _repo.GetByCategoryAsync("all").Returns(new List<Product> { fallbackProduct });
+
+            // Act
+            var result = (await _useCase.ExecuteAsync(skus)).ToList();
+
+            // Assert — should fall back to "all" category
+            Assert.Single(result);
+            Assert.Equal("tx-fb", result[0].Id);
+        }
+
+        [Fact]
+        public async Task Execute_WithEmptyString_ReturnsCategoryFallback()
+        {
+            // Arrange
+            var fallbackProduct = new Product("tx-e", "Empty Tractor", "BrandE", 15000, "img-e", "Desc-e", "all");
+            fallbackProduct.AddVariant("TX-E-STD", 4);
+            _repo.GetByCategoryAsync("all").Returns(new List<Product> { fallbackProduct });
+
+            // Act — empty string is treated as no skus
+            var result = (await _useCase.ExecuteAsync("")).ToList();
+
+            // Assert
+            Assert.Single(result);
+        }
+
+        [Fact]
+        public async Task Execute_WithMultipleSkusSameCategory_ReturnsFilteredResults()
+        {
+            // Arrange — two products with same category
+            var skus = "TX-A,TX-B";
+            var prodA = new Product("tx-a", "Tractor A", "BrandA", 30000, "img-a", "Desc-a", "modern");
+            prodA.AddVariant("TX-A", 5);
+            var prodB = new Product("tx-b", "Tractor B", "BrandB", 35000, "img-b", "Desc-b", "modern");
+            prodB.AddVariant("TX-B", 3);
+            var prodC = new Product("tx-c", "Tractor C", "BrandC", 40000, "img-c", "Desc-c", "modern");
+            prodC.AddVariant("TX-C", 2);
+
+            _repo.GetProductsBySkusAsync(Arg.Any<IEnumerable<string>>())
+                 .Returns(new List<Product> { prodA, prodB });
+            _repo.GetByCategoryAsync("modern")
+                 .Returns(new List<Product> { prodA, prodB, prodC });
+
+            // Act
+            var result = (await _useCase.ExecuteAsync(skus)).ToList();
+
+            // Assert — only prodC (the one NOT matched)
+            Assert.Single(result);
+            Assert.Equal("tx-c", result[0].Id);
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // GetHomeTeasersUseCase Tests
+    // ---------------------------------------------------------------------------
+    public class GetHomeTeasersUseCaseTests
+    {
+        private readonly GetHomeTeasersUseCase _useCase;
+
+        public GetHomeTeasersUseCaseTests()
+        {
+            _useCase = new GetHomeTeasersUseCase();
+        }
+
+        [Fact]
+        public async Task Execute_ReturnsTeasers()
+        {
+            // Act
+            var result = (await _useCase.ExecuteAsync()).ToList();
+
+            // Assert — the use case returns hardcoded teasers
+            Assert.NotEmpty(result);
+        }
+
+        [Fact]
+        public async Task Execute_ReturnsAtLeastTwoTeasers()
+        {
+            // Act
+            var result = (await _useCase.ExecuteAsync()).ToList();
+
+            // Assert
+            Assert.True(result.Count >= 2);
+        }
+
+        [Fact]
+        public async Task Execute_TeaserHasRequiredFields()
+        {
+            // Act
+            var result = (await _useCase.ExecuteAsync()).ToList();
+
+            // Assert — each teaser should have non-empty Id, Title, Image, Filter
+            foreach (var teaser in result)
+            {
+                Assert.False(string.IsNullOrWhiteSpace(teaser.Id));
+                Assert.False(string.IsNullOrWhiteSpace(teaser.Title));
+                Assert.False(string.IsNullOrWhiteSpace(teaser.Image));
+                Assert.False(string.IsNullOrWhiteSpace(teaser.Filter));
+            }
+        }
     }
 }
