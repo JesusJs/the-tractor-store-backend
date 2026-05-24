@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TractorEcommerce.Modules.Sales.Domain.Entities;
 using Xunit;
 
 namespace TractorEcommerce.Modules.Sales.Tests.Domain

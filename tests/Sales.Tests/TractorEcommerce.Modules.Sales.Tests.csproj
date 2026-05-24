@@ -21,8 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Modules\Sales\Application\TractorEcommerce.Modules.Sales.Application.csproj" />
-    <ProjectReference Include="..\..\src\Modules\Sales\Domain\TractorEcommerce.Modules.Sales.Domain.csproj" />
     <ProjectReference Include="..\..\src\Host\TractorEcommerce.Api\TractorEcommerce.Api.csproj" />
   </ItemGroup>
 
