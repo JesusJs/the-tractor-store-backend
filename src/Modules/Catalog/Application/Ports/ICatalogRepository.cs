@@ -14,5 +14,6 @@ namespace TractorEcommerce.Modules.Catalog.Application.Ports
         Task<IEnumerable<string>> GetActiveCategoriesAsync();
         Task<IEnumerable<Store>> GetStoresAsync();
         Task<IEnumerable<Product>> GetProductsBySkusAsync(IEnumerable<string> skus);
+        Task UpdateVariantAsync(ProductVariant variant);
     }
 }
