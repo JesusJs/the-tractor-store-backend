@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using TractorEcommerce.Modules.Catalog.Application.Ports;
-using TractorEcommerce.Modules.Sales.Domain.Events;
 using TractorEcommerce.Modules.Shared.Application.Events;
 
 namespace TractorEcommerce.Modules.Catalog.Infrastructure.Events.Messaging
@@ -88,5 +87,8 @@ namespace TractorEcommerce.Modules.Catalog.Infrastructure.Events.Messaging
             _consumer.Dispose();
             base.Dispose();
         }
+
+        public record OrderPlacedEvent(string OrderId, List<OrderPlacedItemDto> Items);
+        public record OrderPlacedItemDto(string Sku, int Quantity);
     }
 }
