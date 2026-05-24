@@ -1,4 +1,4 @@
-﻿namespace TractorEcommerce.Api.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Ports
+﻿namespace TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Ports
 {
     public interface IInventoryInternalService
     {

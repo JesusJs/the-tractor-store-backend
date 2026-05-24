@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
-using TractorEcommerce.Modules.Shared.Application.Events;
+using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Events;
 
 namespace TractorEcommerce.Modules.Catalog.Infrastructure.Messaging;
 

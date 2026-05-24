@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using TractorEcommerce.Modules.Catalog.Application.Ports;
-using TractorEcommerce.Modules.Shared.Application.Events;
 
 namespace TractorEcommerce.Modules.Catalog.Infrastructure.Events.Messaging
 {

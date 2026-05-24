@@ -1,4 +1,4 @@
-﻿namespace TractorEcommerce.Api.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Exceptions
+﻿namespace TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Exceptions
 {
     public class DomainNotFoundException : Exception
     {

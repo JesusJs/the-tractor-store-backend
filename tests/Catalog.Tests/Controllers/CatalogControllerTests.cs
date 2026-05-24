@@ -4,10 +4,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using TractorEcommerce.Api.Controllers;
-using TractorEcommerce.Api.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Exceptions;
 using TractorEcommerce.Modules.Catalog.Application.Ports;
 using TractorEcommerce.Modules.Catalog.Application.UseCase;
 using TractorEcommerce.Modules.Catalog.Domain.Entities;
+using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Exceptions;
 using Xunit;
 using static TractorEcommerce.Modules.Catalog.Application.DTOs.CatalogDtos;
 

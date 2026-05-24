@@ -1,12 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using TractorEcommerce.Modules.Sales.Application.Interfaces.Repository;
 using TractorEcommerce.Modules.Sales.Application.Interfaces.Service;
 using TractorEcommerce.Modules.Sales.Domain.Events;
-using TractorEcommerce.Modules.Shared.Application.Events;
+using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Events;
 using static TractorEcommerce.Modules.Sales.Application.DTOs.SalesDtos;
+using OrderPlacedEvent = TractorEcommerce.Modules.Sales.Domain.Events.OrderPlacedEvent;
 
 namespace TractorEcommerce.Modules.Sales.Application.UseCase
 {
@@ -67,7 +64,7 @@ namespace TractorEcommerce.Modules.Sales.Application.UseCase
                 await _salesRepository.SaveOrderReceiptAsync(receipt);
 
                 // Mapeamos los items para el evento de Kafka antes de vaciar el carrito
-                var eventItems = cart.Items.Select(i => new OrderEventItem(i.VariantId, i.Quantity)).ToList();
+                var eventItems = cart.Items.Select(i => new Domain.Events.OrderEventItem(i.VariantId, i.Quantity)).ToList();
 
                 // 5. Vaciar el carrito del usuario
                 cart.Clear();

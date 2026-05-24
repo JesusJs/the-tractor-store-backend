@@ -1,14 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using NSubstitute;
 using TractorEcommerce.Modules.Sales.Application.Interfaces;
 using TractorEcommerce.Modules.Sales.Application.Interfaces.Repository;
 using TractorEcommerce.Modules.Sales.Application.Interfaces.Service;
 using TractorEcommerce.Modules.Sales.Application.UseCase;
 using TractorEcommerce.Modules.Sales.Domain.Entities;
-using TractorEcommerce.Modules.Shared.Application.Events;
+using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Events;
 using Xunit;
 using static TractorEcommerce.Modules.Sales.Application.DTOs.SalesDtos;
 

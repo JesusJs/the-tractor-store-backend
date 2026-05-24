@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace TractorEcommerce.Modules.Shared.Application.Events
+﻿namespace TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Events
 {
     public interface IEventBus
     {

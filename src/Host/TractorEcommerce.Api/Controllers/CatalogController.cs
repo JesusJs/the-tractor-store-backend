@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using TractorEcommerce.Api.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Exceptions;
 using TractorEcommerce.Modules.Catalog.Application.UseCase;
+using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Exceptions;
 using static TractorEcommerce.Modules.Catalog.Application.DTOs.CatalogDtos;
 
 namespace TractorEcommerce.Api.Controllers

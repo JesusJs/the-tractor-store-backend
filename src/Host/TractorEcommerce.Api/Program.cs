@@ -9,9 +9,8 @@ using TractorEcommerce.Modules.Sales.Application.Interfaces.Repository;
 using TractorEcommerce.Modules.Sales.Application.Interfaces.Service;
 using TractorEcommerce.Modules.Sales.Infrastructure.Persistence;
 using TractorEcommerce.Modules.Sales.Infrastructure.Repository;
-using TractorEcommerce.Modules.Shared.Application.Events;
 using TractorEcommerce.Modules.Catalog.Application.UseCase;
-using TractorEcommerce.Modules.Catalog.Infrastructure.Repository;
+using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
