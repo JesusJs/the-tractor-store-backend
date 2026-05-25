@@ -8,6 +8,8 @@ using TractorEcommerce.Modules.Catalog.Application.UseCase;
 using TractorEcommerce.Modules.Catalog.Domain.Entities;
 using Xunit;
 using static TractorEcommerce.Modules.Catalog.Application.DTOs.CatalogDtos;
+using TractorEcommerce.Modules.Catalog.Application.Events;
+using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Events;
 
 namespace TractorEcommerce.Modules.Catalog.Tests.Application
 {
@@ -141,6 +143,11 @@ namespace TractorEcommerce.Modules.Catalog.Tests.Application
 
             // Assert — 2 stores projected
             Assert.Equal(2, result.Count);
+            Assert.Equal("st-1", result[0].Id);
+            Assert.Equal("Main Store", result[0].Name);
+            Assert.Equal("Calle Mayor 1", result[0].Address);
+            Assert.Equal("Madrid", result[0].City);
+            Assert.Equal("img1", result[0].Image);
         }
 
         [Fact]
@@ -441,6 +448,63 @@ namespace TractorEcommerce.Modules.Catalog.Tests.Application
                 Assert.False(string.IsNullOrWhiteSpace(teaser.Image));
                 Assert.False(string.IsNullOrWhiteSpace(teaser.Filter));
             }
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // UpdateProductStockUseCase Tests
+    // ---------------------------------------------------------------------------
+    public class UpdateProductStockUseCaseTests
+    {
+        private readonly ICatalogRepository _repo;
+        private readonly IEventBus _eventBus;
+        private readonly UpdateProductStockUseCase _useCase;
+
+        public UpdateProductStockUseCaseTests()
+        {
+            _repo = Substitute.For<ICatalogRepository>();
+            _eventBus = Substitute.For<IEventBus>();
+            _useCase = new UpdateProductStockUseCase(_repo, _eventBus);
+        }
+
+        [Fact]
+        public async Task Execute_WithExistingVariant_UpdatesStockAndPublishesEvent()
+        {
+            // Arrange
+            var sku = "TX-VAR-1";
+            var variant = new ProductVariant(sku, "tx-1", 10);
+            _repo.GetVariantBySkuAsync(sku).Returns(variant);
+
+            // Act
+            await _useCase.ExecuteAsync(sku, 5);
+
+            // Assert
+            Assert.Equal(15, variant.Stock);
+            await _repo.Received(1).UpdateVariantAsync(variant);
+            await _eventBus.Received(1).PublishAsync(
+                "catalog.products.stock-updated",
+                sku,
+                Arg.Is<ProductStockUpdatedEvent>(e => e.Sku == sku && e.NewStock == 15)
+            );
+        }
+
+        [Fact]
+        public async Task Execute_WithMissingVariant_DoesNotCallUpdateOrPublish()
+        {
+            // Arrange
+            var sku = "MISSING-SKU";
+            _repo.GetVariantBySkuAsync(sku).Returns((ProductVariant?)null);
+
+            // Act
+            await _useCase.ExecuteAsync(sku, 5);
+
+            // Assert
+            await _repo.DidNotReceive().UpdateVariantAsync(Arg.Any<ProductVariant>());
+            await _eventBus.DidNotReceive().PublishAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<object>()
+            );
         }
     }
 }

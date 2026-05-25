@@ -276,14 +276,62 @@ namespace TractorEcommerce.Modules.Sales.Tests.Application
                 new OrderPayloadItemDto("prod-1", "SKU-1", "Tractor", "STD", 100, 2, "img")
             });
 
-            await _useCase.ExecuteAsync(payload);
+            // Assert payload getters
+            Assert.Equal("John", payload.FirstName);
+            Assert.Equal("Doe", payload.LastName);
+            Assert.Equal("store-1", payload.StoreId);
+            Assert.Equal("pickup-1", payload.ExtraPickups);
+            Assert.Equal("prod-1", payload.Items[0].ProductId);
+            Assert.Equal("SKU-1", payload.Items[0].VariantId);
+            Assert.Equal("Tractor", payload.Items[0].ProductName);
+            Assert.Equal("STD", payload.Items[0].VariantName);
+            Assert.Equal(100, payload.Items[0].Price);
+            Assert.Equal(2, payload.Items[0].Quantity);
+            Assert.Equal("img", payload.Items[0].Image);
 
-            await _orderRepository.Received(1).SaveOrderAsync(Arg.Any<OrderReceiptDto>());
-            await _eventBus.Received(1).PublishAsync(
+            OrderReceiptDto? capturedReceipt = null;
+            await _orderRepository.SaveOrderAsync(Arg.Do<OrderReceiptDto>(r => capturedReceipt = r));
+
+            OrderPlacedIntegrationEvent? capturedEvent = null;
+            await _eventBus.PublishAsync(
                 topic: "order.orders.placed",
                 key: Arg.Any<string>(),
-                message: Arg.Any<OrderPlacedIntegrationEvent>()
+                message: Arg.Do<OrderPlacedIntegrationEvent>(e => capturedEvent = e)
             );
+
+            await _useCase.ExecuteAsync(payload);
+
+            // Assert OrderReceiptDto and OrderItemDetailDto getters
+            Assert.NotNull(capturedReceipt);
+            Assert.NotNull(capturedReceipt.Id);
+            Assert.Equal("John", capturedReceipt.FirstName);
+            Assert.Equal("Doe", capturedReceipt.LastName);
+            Assert.Equal("store-1", capturedReceipt.StoreId);
+            Assert.Equal("pickup-1", capturedReceipt.ExtraPickups);
+            Assert.Equal(200m, capturedReceipt.SubTotal);
+            Assert.Equal(38m, capturedReceipt.Tax);
+            Assert.Equal(238m, capturedReceipt.Total);
+            Assert.True(capturedReceipt.PlacedAt <= DateTime.UtcNow);
+            Assert.Equal("Pending", capturedReceipt.Status);
+
+            Assert.Single(capturedReceipt.Items);
+            var item = capturedReceipt.Items[0];
+            Assert.Equal("prod-1", item.ProductId);
+            Assert.Equal("SKU-1", item.VariantId);
+            Assert.Equal("Tractor", item.ProductName);
+            Assert.Equal("STD", item.VariantName);
+            Assert.Equal(100m, item.Price);
+            Assert.Equal(2, item.Quantity);
+            Assert.Equal("img", item.Image);
+
+            // Assert OrderPlacedIntegrationEvent and OrderStockItemDto getters
+            Assert.NotNull(capturedEvent);
+            Assert.Equal(Guid.Parse(capturedReceipt.Id), capturedEvent.OrderId);
+            Assert.Equal("John Doe", capturedEvent.CustomerId);
+            Assert.Single(capturedEvent.Items);
+            var stockItem = capturedEvent.Items[0];
+            Assert.Equal("SKU-1", stockItem.Sku);
+            Assert.Equal(2, stockItem.Quantity);
         }
     }
 }
