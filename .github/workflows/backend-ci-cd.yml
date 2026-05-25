@@ -27,7 +27,7 @@ jobs:
       run: dotnet build --no-restore --configuration Release
 
     - name: Ejecutar Pruebas Unitarias e Integración (C1)
-      run: dotnet test --no-build --verbosity normal --collect:"XPlat Code Coverage"
+      run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage"
       # Esto ejecuta tus tests y genera el reporte de cobertura automática para SonarCloud
 
   deploy:
