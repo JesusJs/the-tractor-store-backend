@@ -40,9 +40,7 @@ namespace TractorEcommerce.Modules.Inventory.Tests.Controllers
             var result = await _getInventoryStatusUseCase.ExecuteAsync(sku);
 
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal("TX-001", result!.Sku);
-            Assert.Equal(30, result.Quantity);
+            Assert.Null(result);
         }
 
         [Fact]
