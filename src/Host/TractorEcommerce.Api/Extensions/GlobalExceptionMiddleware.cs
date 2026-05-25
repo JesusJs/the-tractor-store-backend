@@ -53,6 +53,12 @@ namespace TractorEcommerce.Api.Extensions
                     details = valEx.Details; // Aquí capturamos los detalles para Angular
                     break;
 
+                case UnauthorizedAccessException _:
+                    statusCode = StatusCodes.Status401Unauthorized;
+                    code = "UNAUTHORIZED";
+                    message = exception.Message;
+                    break;
+
                 case ArgumentException _ or ArgumentNullException _ or InvalidOperationException _:
                     statusCode = StatusCodes.Status400BadRequest;
                     code = "BAD_REQUEST";

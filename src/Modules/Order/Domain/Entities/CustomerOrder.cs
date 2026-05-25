@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -13,6 +13,11 @@ namespace TractorEcommerce.Modules.Order.Domain.Entities
         public decimal TotalAmount => _items.Sum(item => item.Total);
         public DateTime CreatedAt { get; private set; }
         public string Status { get; private set; } // Ej: "Pending", "Completed", "Cancelled"
+
+        private CustomerOrder()
+        {
+            CustomerId = null!;
+        }
 
         public CustomerOrder(Guid id, string customerId, List<OrderLineItem> items)
         {

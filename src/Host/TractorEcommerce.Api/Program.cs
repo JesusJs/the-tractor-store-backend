@@ -54,9 +54,15 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("MfeCorsPolicy", policy =>
     {
-        policy.AllowAnyOrigin() // En producción cambiar por dominios específicos
+        policy.WithOrigins(
+                "http://localhost:4200",  // Shell host
+                "http://localhost:4201",  // mfe-explore
+                "http://localhost:4202",  // mfe-decide
+                "http://localhost:4203"   // mfe-checkout
+              )
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();        // Required for tractor_session cookie
     });
 });
 
@@ -97,24 +103,73 @@ builder.Services.AddScoped<TractorEcommerce.Modules.Cart.Application.UseCase.Rem
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
-
+// En tu Program.cs
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowMyFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200") // Especifica tu origen exacto
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // Esto es lo que permite enviar tus cookies/JWT
+    });
+});
 var app = builder.Build();
-
+app.UseCors("AllowMyFrontend");
 // ==========================================
 // 6. AUTO-MIGRACIÓN DE BASE DE DATOS AL INICIAR
 // ==========================================
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    
+    // Migrar CatalogDbContext
     try
     {
-        var catalogContext = services.GetRequiredService<CatalogDbContext>();
-        await catalogContext.Database.MigrateAsync();
+        var context = services.GetRequiredService<CatalogDbContext>();
+        await context.Database.MigrateAsync();
+        logger.LogInformation("Migraciones de CatalogDbContext aplicadas con éxito.");
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ocurrió un error al aplicar las migraciones de base de datos.");
+        logger.LogError(ex, "Ocurrió un error al aplicar las migraciones de CatalogDbContext.");
+    }
+
+    // Migrar OrderDbContext
+    try
+    {
+        var context = services.GetRequiredService<TractorEcommerce.Modules.Order.Infrastructure.Data.OrderDbContext>();
+        await context.Database.MigrateAsync();
+        logger.LogInformation("Migraciones de OrderDbContext aplicadas con éxito.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Ocurrió un error al aplicar las migraciones de OrderDbContext.");
+    }
+
+    // Migrar InventoryDbContext
+    try
+    {
+        var context = services.GetRequiredService<TractorEcommerce.Modules.Inventory.Infrastructure.Data.InventoryDbContext>();
+        await context.Database.MigrateAsync();
+        logger.LogInformation("Migraciones de InventoryDbContext aplicadas con éxito.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Ocurrió un error al aplicar las migraciones de InventoryDbContext.");
+    }
+
+    // Migrar CartDbContext
+    try
+    {
+        var context = services.GetRequiredService<TractorEcommerce.Modules.Cart.Infrastructure.Data.CartDbContext>();
+        await context.Database.MigrateAsync();
+        logger.LogInformation("Migraciones de CartDbContext aplicadas con éxito.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Ocurrió un error al aplicar las migraciones de CartDbContext.");
     }
 }
 
