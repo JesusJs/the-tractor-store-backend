@@ -33,7 +33,7 @@ namespace TractorEcommerce.Api.Controllers
             if (status == null)
             {
                 _logger.LogWarning("Consulta fallida: El SKU {Sku} no existe en el inventario.", sku);
-                throw new DomainNotFoundException($"El SKU '{sku}' no fue localizado en el inventario.");
+                return Ok(new { sku = sku, stock = 0 });
             }
 
             return Ok(status);
