@@ -4,49 +4,46 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
-using TractorEcommerce.Api.Controllers;
-using TractorEcommerce.Modules.Sales.Application.Interfaces;
-using TractorEcommerce.Modules.Sales.Application.Interfaces.Repository;
-using TractorEcommerce.Modules.Sales.Application.Interfaces.Service;
-using TractorEcommerce.Modules.Sales.Application.UseCase;
-using TractorEcommerce.Modules.Sales.Domain.Entities;
-using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Events;
 using Xunit;
-using static TractorEcommerce.Modules.Sales.Application.DTOs.SalesDtos;
+using TractorEcommerce.Api.Controllers;
+using CartUseCase = TractorEcommerce.Modules.Cart.Application.UseCase;
+using OrderUseCase = TractorEcommerce.Modules.Order.Application.UseCase;
+using TractorEcommerce.Modules.Cart.Application.Commands;
+using TractorEcommerce.Modules.Order.Application.DTOs;
+using TractorEcommerce.Modules.Cart.Application.Interfaces.Repository;
+using TractorEcommerce.Modules.Order.Application.Interfaces.Repository;
+using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Events;
 
 namespace TractorEcommerce.Modules.Sales.Tests.Controllers
 {
-    public class SalesControllerTests
+    // =========================================================================
+    // CartController Tests
+    // =========================================================================
+    public class CartControllerTests
     {
-        private readonly ISalesRepository _salesRepository;
-        private readonly IInventoryService _inventoryService;
-        private readonly IEventBus _eventBus;
-        private readonly ICatalogService _catalogService;
-        private readonly SalesController _controller;
+        private readonly ICartRepository _cartRepository;
+        private readonly CartUseCase.AddToCartUseCase _addToCartUseCase;
+        private readonly CartUseCase.RemoveFromCartUseCase _removeFromCartUseCase;
+        private readonly CartUseCase.GetCartUseCase _getCartUseCase;
+        private readonly ILogger<CartController> _logger;
+        private readonly CartController _controller;
         private readonly DefaultHttpContext _httpContext;
 
-        public SalesControllerTests()
+        public CartControllerTests()
         {
-            _salesRepository = Substitute.For<ISalesRepository>();
-            _inventoryService = Substitute.For<IInventoryService>();
-            _eventBus = Substitute.For<IEventBus>();
-            _catalogService = Substitute.For<ICatalogService>();
+            _cartRepository = Substitute.For<ICartRepository>();
+            _addToCartUseCase = new CartUseCase.AddToCartUseCase(_cartRepository);
+            _removeFromCartUseCase = new CartUseCase.RemoveFromCartUseCase(_cartRepository);
+            _getCartUseCase = new CartUseCase.GetCartUseCase(_cartRepository);
+            _logger = Substitute.For<ILogger<CartController>>();
 
-            var checkoutUseCase = new CheckoutUseCase(_salesRepository, _inventoryService, _eventBus);
-            var addToCartUseCase = new AddToCartUseCase(_salesRepository, _catalogService);
-            var removeFromCartUseCase = new RemoveFromCartUseCase(_salesRepository);
-            var getCartUseCase = new GetCartUseCase(_salesRepository);
-            var getMiniCartUseCase = new GetMiniCartUseCase(_salesRepository);
-            var getOrderByIdUseCase = new GetOrderByIdUseCase(_salesRepository);
-
-            _controller = new SalesController(
-                checkoutUseCase,
-                addToCartUseCase,
-                removeFromCartUseCase,
-                getCartUseCase,
-                getMiniCartUseCase,
-                getOrderByIdUseCase
+            _controller = new CartController(
+                _addToCartUseCase,
+                _removeFromCartUseCase,
+                _getCartUseCase,
+                _logger
             );
 
             _httpContext = new DefaultHttpContext();
@@ -57,312 +54,158 @@ namespace TractorEcommerce.Modules.Sales.Tests.Controllers
         }
 
         [Fact]
-        public async Task GetCart_ShouldReturnCartDto()
+        public async Task GetCart_WithAnonymousCookie_ReturnsCart()
         {
-            // Arrange
-            var cartId = "test-user-id";
-            _httpContext.Request.Headers.Cookie = "tractor_session=" + cartId;
+            var sessionCartId = "session-12345";
+            _httpContext.Request.Headers.Cookie = $"tractor_session={sessionCartId}";
 
-            var cart = new Cart(cartId);
-            _salesRepository.GetCartByUserIdAsync(cartId).Returns(cart);
+            var cart = new TractorEcommerce.Modules.Cart.Domain.Entities.Cart(sessionCartId);
+            _cartRepository.GetByUserIdAsync(sessionCartId).Returns(cart);
 
-            // Act
             var result = await _controller.GetCart();
 
-            // Assert
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var cartDto = Assert.IsType<CartDto>(okResult.Value);
-            Assert.Equal(0, cartDto.TotalItems);
+            var returnedCart = Assert.IsType<TractorEcommerce.Modules.Cart.Domain.Entities.Cart>(okResult.Value);
+            Assert.Equal(sessionCartId, returnedCart.UserId);
         }
 
         [Fact]
-        public async Task GetMiniCart_ShouldReturnMiniCartDto()
+        public async Task GetCart_WithAuthenticatedUser_ReturnsCart()
         {
-            // Arrange
-            var cartId = "test-user-id";
-            _httpContext.Request.Headers.Cookie = "tractor_session=" + cartId;
-
-            var cart = new Cart(cartId);
-            cart.AddItem("p-1", "SKU-1", "Prod 1", "Var 1", 100, "img");
-            _salesRepository.GetCartByUserIdAsync(cartId).Returns(cart);
-
-            // Act
-            var result = await _controller.GetMiniCart();
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var miniCartDto = Assert.IsType<MiniCartDto>(okResult.Value);
-            Assert.Equal(1, miniCartDto.Quantity);
-        }
-
-        [Fact]
-        public async Task AddToCart_WithValidSku_ShouldAddAndReturnCart()
-        {
-            // Arrange
-            var cartId = "test-user-id";
-            _httpContext.Request.Headers.Cookie = "tractor_session=" + cartId;
-
-            var sku = "SKU-VALID";
-            var productInfo = new CatalogProductInfo("p-1", sku, "Tractor 1", "Default", 12000, "image-url");
-            _catalogService.GetProductBySkuAsync(sku).Returns(productInfo);
-
-            var cart = new Cart(cartId);
-            _salesRepository.GetCartByUserIdAsync(cartId).Returns(cart);
-
-            // Act
-            var request = new AddToCartRequest(sku);
-            var result = await _controller.AddToCart(request);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var cartDto = Assert.IsType<CartDto>(okResult.Value);
-            Assert.Equal(1, cartDto.TotalItems);
-            Assert.Equal(12000, cartDto.SubTotal);
-            Assert.Equal(2520, cartDto.Tax);
-            Assert.Equal(14520, cartDto.Total);
-        }
-
-        [Fact]
-        public async Task AddToCart_WithInvalidSku_ShouldReturnNotFound()
-        {
-            // Arrange
-            var cartId = "test-user-id";
-            _httpContext.Request.Headers.Cookie = "tractor_session=" + cartId;
-
-            var sku = "SKU-INVALID";
-            _catalogService.GetProductBySkuAsync(sku).Returns((CatalogProductInfo?)null);
-
-            // Act
-            var request = new AddToCartRequest(sku);
-            var result = await _controller.AddToCart(request);
-
-            // Assert
-            Assert.IsType<NotFoundObjectResult>(result.Result);
-        }
-
-        [Fact]
-        public async Task RemoveFromCart_ShouldRemoveItemAndReturnCart()
-        {
-            // Arrange
-            var cartId = "test-user-id";
-            _httpContext.Request.Headers.Cookie = "tractor_session=" + cartId;
-
-            var sku = "SKU-1";
-            var cart = new Cart(cartId);
-            cart.AddItem("p-1", sku, "Prod 1", "Var 1", 100, "img");
-            _salesRepository.GetCartByUserIdAsync(cartId).Returns(cart);
-
-            // Act
-            var result = await _controller.RemoveFromCart(sku);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var cartDto = Assert.IsType<CartDto>(okResult.Value);
-            Assert.Equal(0, cartDto.TotalItems);
-        }
-
-        [Fact]
-        public async Task PlaceOrder_WithValidPayload_ShouldReturnReceipt()
-        {
-            // Arrange
-            var cartId = "test-user-id";
-            _httpContext.Request.Headers.Cookie = "tractor_session=" + cartId;
-
-            var cart = new Cart(cartId);
-            cart.AddItem("p-1", "SKU-1", "Prod 1", "Var 1", 100, "img");
-            _salesRepository.GetCartByUserIdAsync(cartId).Returns(cart);
-
-            var transaction = Substitute.For<IDbTransactionWrapper>();
-            _salesRepository.BeginTransactionAsync().Returns(transaction);
-            _inventoryService.DecreaseStockAsync("SKU-1", 1).Returns(true);
-
-            // Act
-            var payload = new OrderPayloadDto("John", "Doe", "store-1", new List<string>());
-            var result = await _controller.PlaceOrder(payload);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var receipt = Assert.IsType<OrderReceiptDto>(okResult.Value);
-            Assert.Equal("John", receipt.FirstName);
-            Assert.Equal("store-1", receipt.StoreId);
-        }
-
-        [Fact]
-        public async Task PlaceOrder_WithEmptyCart_ShouldReturnBadRequest()
-        {
-            // Arrange
-            var cartId = "test-user-id";
-            _httpContext.Request.Headers.Cookie = "tractor_session=" + cartId;
-
-            _salesRepository.GetCartByUserIdAsync(cartId).Returns((Cart?)null);
-
-            // Act
-            var payload = new OrderPayloadDto("John", "Doe", "store-1", new List<string>());
-            var result = await _controller.PlaceOrder(payload);
-
-            // Assert
-            Assert.IsType<BadRequestObjectResult>(result.Result);
-        }
-
-        [Fact]
-        public async Task GetOrder_WithExistingId_ShouldReturnReceipt()
-        {
-            // Arrange
-            var orderId = "ORD-123456";
-            var receipt = new OrderReceiptDto(orderId, "John", "Doe", "store-1", new List<string>(), new List<CartItemDto>(), 100, 21, 121, DateTime.UtcNow);
-            _salesRepository.GetOrderByIdAsync(orderId).Returns(receipt);
-
-            // Act
-            var result = await _controller.GetOrder(orderId);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var returnedReceipt = Assert.IsType<OrderReceiptDto>(okResult.Value);
-            Assert.Equal(orderId, returnedReceipt.Id);
-        }
-
-        [Fact]
-        public async Task GetOrder_WithNonExistingId_ShouldReturnNotFound()
-        {
-            // Arrange
-            var orderId = "ORD-MISSING";
-            _salesRepository.GetOrderByIdAsync(orderId).Returns((OrderReceiptDto?)null);
-
-            // Act
-            var result = await _controller.GetOrder(orderId);
-
-            // Assert
-            Assert.IsType<NotFoundObjectResult>(result.Result);
-        }
-
-        // -----------------------------------------------------------------------
-        // GetOrCreateCartId branches — authenticated user
-        // -----------------------------------------------------------------------
-        [Fact]
-        public async Task GetCart_WithAuthenticatedUser_UsesNameIdentifierClaim()
-        {
-            // Arrange — simulate an authenticated user with NameIdentifier claim
-            var claims = new[] { new Claim(ClaimTypes.NameIdentifier, "auth-user-123") };
+            var userId = "user-auth-123";
+            var claims = new[] { new Claim(ClaimTypes.NameIdentifier, userId) };
             var identity = new ClaimsIdentity(claims, "TestAuth");
             _httpContext.User = new ClaimsPrincipal(identity);
 
-            var cart = new Cart("auth-user-123");
-            _salesRepository.GetCartByUserIdAsync("auth-user-123").Returns(cart);
+            var cart = new TractorEcommerce.Modules.Cart.Domain.Entities.Cart(userId);
+            _cartRepository.GetByUserIdAsync(userId).Returns(cart);
 
-            // Act
             var result = await _controller.GetCart();
 
-            // Assert
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            Assert.IsType<CartDto>(okResult.Value);
-            await _salesRepository.Received(1).GetCartByUserIdAsync("auth-user-123");
+            var returnedCart = Assert.IsType<TractorEcommerce.Modules.Cart.Domain.Entities.Cart>(okResult.Value);
+            Assert.Equal(userId, returnedCart.UserId);
         }
 
         [Fact]
-        public async Task GetCart_WithNoCookieAndNotAuthenticated_CreatesNewSession()
+        public async Task AddToCart_EmptySku_ThrowsArgumentException()
         {
-            // Arrange — no cookie, no authentication
-            // Don't set any cookie header
-
-            // We can't easily capture the generated GUID, but we can verify SaveCartAsync was called
-            _salesRepository.GetCartByUserIdAsync(Arg.Any<string>()).Returns((Cart?)null);
-
-            // Act
-            var result = await _controller.GetCart();
-
-            // Assert — should return an OK with empty cart
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var cartDto = Assert.IsType<CartDto>(okResult.Value);
-            Assert.Equal(0, cartDto.TotalItems);
+            var request = new AddToCartRequest("", 100);
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.AddToCart(request));
         }
 
-        // -----------------------------------------------------------------------
-        // AddToCart — empty SKU validation
-        // -----------------------------------------------------------------------
         [Fact]
-        public async Task AddToCart_WithEmptySku_ShouldReturnBadRequest()
+        public async Task AddToCart_ValidRequest_ReturnsCart()
         {
-            // Arrange
-            var cartId = "test-user-id";
-            _httpContext.Request.Headers.Cookie = "tractor_session=" + cartId;
+            var cartId = "session-123";
+            _httpContext.Request.Headers.Cookie = $"tractor_session={cartId}";
 
-            // Act
-            var request = new AddToCartRequest("");
+            var request = new AddToCartRequest("SKU-1", 100);
+            var cart = new TractorEcommerce.Modules.Cart.Domain.Entities.Cart(cartId);
+            _cartRepository.GetByUserIdAsync(cartId).Returns(cart);
+
             var result = await _controller.AddToCart(request);
 
-            // Assert
-            Assert.IsType<BadRequestObjectResult>(result.Result);
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var returnedCart = Assert.IsType<TractorEcommerce.Modules.Cart.Domain.Entities.Cart>(okResult.Value);
+            Assert.Equal(cartId, returnedCart.UserId);
+            await _cartRepository.Received(1).SaveAsync(cart);
         }
 
         [Fact]
-        public async Task AddToCart_WithWhitespaceSku_ShouldReturnBadRequest()
+        public async Task RemoveFromCart_EmptySku_ThrowsArgumentException()
         {
-            // Arrange
-            var cartId = "test-user-id";
-            _httpContext.Request.Headers.Cookie = "tractor_session=" + cartId;
-
-            // Act
-            var request = new AddToCartRequest("   ");
-            var result = await _controller.AddToCart(request);
-
-            // Assert
-            Assert.IsType<BadRequestObjectResult>(result.Result);
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.RemoveFromCart(""));
         }
 
-        // -----------------------------------------------------------------------
-        // PlaceOrder — invalid payload validation
-        // -----------------------------------------------------------------------
         [Fact]
-        public async Task PlaceOrder_WithEmptyFirstName_ShouldReturnBadRequest()
+        public async Task RemoveFromCart_ValidRequest_ReturnsCart()
         {
-            // Arrange
-            var cartId = "test-user-id";
-            _httpContext.Request.Headers.Cookie = "tractor_session=" + cartId;
+            var cartId = "session-123";
+            _httpContext.Request.Headers.Cookie = $"tractor_session={cartId}";
 
-            // Act — empty FirstName
-            var payload = new OrderPayloadDto("", "Doe", "store-1", new List<string>());
+            var cart = new TractorEcommerce.Modules.Cart.Domain.Entities.Cart(cartId);
+            _cartRepository.GetByUserIdAsync(cartId).Returns(cart);
+
+            var result = await _controller.RemoveFromCart("SKU-1");
+
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var returnedCart = Assert.IsType<TractorEcommerce.Modules.Cart.Domain.Entities.Cart>(okResult.Value);
+            Assert.Equal(cartId, returnedCart.UserId);
+            await _cartRepository.Received(1).SaveAsync(cart);
+        }
+    }
+
+    // =========================================================================
+    // OrderController Tests
+    // =========================================================================
+    public class OrderControllerTests
+    {
+        private readonly IOrderRepository _orderRepository;
+        private readonly IEventBus _eventBus;
+        private readonly OrderUseCase.CheckoutUseCase _checkoutUseCase;
+        private readonly ILogger<OrderController> _logger;
+        private readonly OrderController _controller;
+        private readonly DefaultHttpContext _httpContext;
+
+        public OrderControllerTests()
+        {
+            _orderRepository = Substitute.For<IOrderRepository>();
+            _eventBus = Substitute.For<IEventBus>();
+            _checkoutUseCase = new OrderUseCase.CheckoutUseCase(_orderRepository, _eventBus);
+            _logger = Substitute.For<ILogger<OrderController>>();
+
+            _controller = new OrderController(
+                _checkoutUseCase,
+                _logger
+            );
+
+            _httpContext = new DefaultHttpContext();
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = _httpContext
+            };
+        }
+
+        [Fact]
+        public async Task PlaceOrder_NullPayload_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.PlaceOrder(null!));
+        }
+
+        [Fact]
+        public async Task PlaceOrder_EmptyStoreId_ThrowsArgumentException()
+        {
+            var payload = new OrderPayloadDto("John", "Doe", "", null, new List<OrderPayloadItemDto>());
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.PlaceOrder(payload));
+        }
+
+        [Fact]
+        public async Task PlaceOrder_NoCookieSession_ThrowsInvalidOperationException()
+        {
+            var payload = new OrderPayloadDto("John", "Doe", "store-1", null, new List<OrderPayloadItemDto>());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.PlaceOrder(payload));
+        }
+
+        [Fact]
+        public async Task PlaceOrder_ValidRequest_ReturnsReceipt()
+        {
+            var cartId = "session-123";
+            _httpContext.Request.Headers.Cookie = $"tractor_session={cartId}";
+
+            var payload = new OrderPayloadDto("John", "Doe", "store-1", null, new List<OrderPayloadItemDto>
+            {
+                new OrderPayloadItemDto("prod-1", "SKU-1", "Tractor", "STD", 100, 1, "img")
+            });
+
             var result = await _controller.PlaceOrder(payload);
 
-            // Assert
-            Assert.IsType<BadRequestObjectResult>(result.Result);
-        }
-
-        [Fact]
-        public async Task PlaceOrder_WithEmptyStoreId_ShouldReturnBadRequest()
-        {
-            // Arrange
-            var cartId = "test-user-id";
-            _httpContext.Request.Headers.Cookie = "tractor_session=" + cartId;
-
-            // Act — empty StoreId
-            var payload = new OrderPayloadDto("John", "Doe", "", new List<string>());
-            var result = await _controller.PlaceOrder(payload);
-
-            // Assert
-            Assert.IsType<BadRequestObjectResult>(result.Result);
-        }
-
-        [Fact]
-        public async Task PlaceOrder_WithInsufficientStock_ShouldReturnBadRequest()
-        {
-            // Arrange
-            var cartId = "test-user-id";
-            _httpContext.Request.Headers.Cookie = "tractor_session=" + cartId;
-
-            var cart = new Cart(cartId);
-            cart.AddItem("p-1", "SKU-1", "Prod 1", "Var 1", 100, "img");
-            _salesRepository.GetCartByUserIdAsync(cartId).Returns(cart);
-
-            var transaction = Substitute.For<IDbTransactionWrapper>();
-            _salesRepository.BeginTransactionAsync().Returns(transaction);
-            _inventoryService.DecreaseStockAsync("SKU-1", 1).Returns(false); // no stock
-
-            // Act
-            var payload = new OrderPayloadDto("John", "Doe", "store-1", new List<string>());
-            var result = await _controller.PlaceOrder(payload);
-
-            // Assert
-            Assert.IsType<BadRequestObjectResult>(result.Result);
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var receipt = Assert.IsType<OrderReceiptDto>(okResult.Value);
+            Assert.StartsWith("ORD-", receipt.Id);
+            Assert.Equal("John", receipt.FirstName);
+            Assert.Equal("Doe", receipt.LastName);
+            Assert.Equal("store-1", receipt.StoreId);
         }
     }
 }

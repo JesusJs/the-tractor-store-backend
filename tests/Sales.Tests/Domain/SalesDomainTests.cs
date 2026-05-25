@@ -2,316 +2,215 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
+using CartEntity = TractorEcommerce.Modules.Cart.Domain.Entities.Cart;
+using TractorEcommerce.Modules.Cart.Domain.Entities;
+using TractorEcommerce.Modules.Order.Domain.Entities;
 
 namespace TractorEcommerce.Modules.Sales.Tests.Domain
 {
-    // ---------------------------------------------------------------------------
-    // OrderReceipt Domain Tests
-    // ---------------------------------------------------------------------------
-    public class OrderReceiptTests
+    // =========================================================================
+    // Cart & CartItem Domain Tests
+    // =========================================================================
+    public class CartDomainTests
     {
         [Fact]
-        public void Constructor_SetsAllProperties()
+        public void Cart_Constructor_SetsUserId()
         {
-            // Arrange
-            var id = "ORD-001";
-            var placed = DateTime.UtcNow;
+            var cart = new CartEntity("user-1");
+            Assert.Equal("user-1", cart.UserId);
+            Assert.Empty(cart.Items);
+        }
 
-            // Act
-            var receipt = new OrderReceipt(id, "John", "Doe", "store-1", null, 10000, 2100, 12100, placed);
-
-            // Assert
-            Assert.Equal(id, receipt.Id);
-            Assert.Equal("John", receipt.FirstName);
-            Assert.Equal("Doe", receipt.LastName);
-            Assert.Equal("store-1", receipt.StoreId);
-            Assert.Null(receipt.ExtraPickups);
-            Assert.Equal(10000, receipt.SubTotal);
-            Assert.Equal(2100, receipt.Tax);
-            Assert.Equal(12100, receipt.Total);
-            Assert.Equal(placed, receipt.PlacedAt);
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData(null)]
+        public void Cart_Constructor_EmptyUserId_ThrowsArgumentException(string? userId)
+        {
+            Assert.Throws<ArgumentException>(() => new CartEntity(userId!));
         }
 
         [Fact]
-        public void Constructor_WithExtraPickups_SetsExtraPickups()
+        public void Cart_AddItem_AddsNewItem()
         {
-            // Act
-            var receipt = new OrderReceipt("ORD-002", "Ana", "Ruiz", "store-2", "extra-store-A", 5000, 1050, 6050, DateTime.UtcNow);
+            var cart = new CartEntity("user-1");
+            cart.AddItem("SKU-1", 2, 100);
 
-            // Assert
-            Assert.Equal("extra-store-A", receipt.ExtraPickups);
-        }
-
-        [Fact]
-        public void Items_InitiallyEmpty()
-        {
-            // Act
-            var receipt = new OrderReceipt("ORD-003", "Luis", "García", "store-3", null, 0, 0, 0, DateTime.UtcNow);
-
-            // Assert
-            Assert.Empty(receipt.Items);
-        }
-
-        [Fact]
-        public void AddItem_AddsToItemsCollection()
-        {
-            // Arrange
-            var receipt = new OrderReceipt("ORD-004", "Maria", "Lopez", "store-4", null, 5000, 1050, 6050, DateTime.UtcNow);
-            var item = new OrderReceiptItem("SKU-A", "p-1", "Tractor A", "Standard", 5000, 1, "img-a");
-
-            // Act
-            receipt.AddItem(item);
-
-            // Assert
-            Assert.Single(receipt.Items);
-        }
-
-        [Fact]
-        public void AddItem_MultipleItems_AllAppear()
-        {
-            // Arrange
-            var receipt = new OrderReceipt("ORD-005", "Pedro", "Sanz", "store-5", null, 20000, 4200, 24200, DateTime.UtcNow);
-
-            // Act
-            receipt.AddItem(new OrderReceiptItem("SKU-A", "p-1", "Tractor A", "STD", 10000, 1, "img-a"));
-            receipt.AddItem(new OrderReceiptItem("SKU-B", "p-2", "Tractor B", "GPS", 10000, 1, "img-b"));
-
-            // Assert
-            Assert.Equal(2, receipt.Items.Count);
-        }
-    }
-
-    // ---------------------------------------------------------------------------
-    // OrderReceiptItem Domain Tests
-    // ---------------------------------------------------------------------------
-    public class OrderReceiptItemTests
-    {
-        [Fact]
-        public void Constructor_SetsAllProperties()
-        {
-            // Act
-            var item = new OrderReceiptItem("SKU-001", "prod-1", "Tractor Pro", "GPS Edition", 15000, 2, "img-url");
-
-            // Assert
-            Assert.Equal("SKU-001", item.Sku);
-            Assert.Equal("prod-1", item.ProductId);
-            Assert.Equal("Tractor Pro", item.ProductName);
-            Assert.Equal("GPS Edition", item.VariantName);
-            Assert.Equal(15000, item.Price);
+            Assert.Single(cart.Items);
+            var item = cart.Items.First();
+            Assert.Equal("SKU-1", item.Sku);
             Assert.Equal(2, item.Quantity);
-            Assert.Equal("img-url", item.Image);
+            Assert.Equal(100, item.Price);
+            Assert.Equal(200, item.Total);
         }
 
         [Fact]
-        public void Constructor_WithQuantityOne_SetsQuantityOne()
+        public void Cart_AddItem_ExistingSku_IncrementsQuantity()
         {
-            // Act
-            var item = new OrderReceiptItem("SKU-002", "prod-2", "Mini Tractor", "Basic", 3000, 1, "img-mini");
+            var cart = new CartEntity("user-1");
+            cart.AddItem("SKU-1", 2, 100);
+            cart.AddItem("SKU-1", 3, 100);
 
-            // Assert
-            Assert.Equal(1, item.Quantity);
-        }
-
-        [Fact]
-        public void Constructor_WithZeroPrice_AllowsIt()
-        {
-            // Act
-            var item = new OrderReceiptItem("SKU-FREE", "prod-free", "Free Item", "Promo", 0, 1, "img-free");
-
-            // Assert
-            Assert.Equal(0, item.Price);
-        }
-    }
-
-    // ---------------------------------------------------------------------------
-    // CartItem Domain Tests (boosting 95.2% → 100%)
-    // ---------------------------------------------------------------------------
-    public class CartItemDomainTests
-    {
-        [Fact]
-        public void Constructor_SetsAllProperties()
-        {
-            // Act
-            var item = new CartItem("prod-1", "SKU-001", "Tractor Pro", "GPS", 15000, "img-url");
-
-            // Assert
-            Assert.Equal("prod-1", item.ProductId);
-            Assert.Equal("SKU-001", item.VariantId);
-            Assert.Equal("Tractor Pro", item.ProductName);
-            Assert.Equal("GPS", item.VariantName);
-            Assert.Equal(15000, item.Price);
-            Assert.Equal(1, item.Quantity); // default
-            Assert.Equal("img-url", item.Image);
-        }
-
-        [Fact]
-        public void Constructor_WithExplicitQuantity_SetsQuantity()
-        {
-            // Act
-            var item = new CartItem("prod-1", "SKU-001", "Tractor", "STD", 5000, "img", quantity: 3);
-
-            // Assert
-            Assert.Equal(3, item.Quantity);
-        }
-
-        [Fact]
-        public void IncrementQuantity_IncreasesByOne()
-        {
-            // Arrange
-            var item = new CartItem("prod-1", "SKU-001", "Tractor", "STD", 5000, "img");
-
-            // Act
-            item.IncrementQuantity();
-
-            // Assert
-            Assert.Equal(2, item.Quantity);
-        }
-
-        [Fact]
-        public void IncrementQuantity_MultipleTimes_AccumulatesCorrectly()
-        {
-            // Arrange
-            var item = new CartItem("prod-1", "SKU-001", "Tractor", "STD", 5000, "img");
-
-            // Act
-            item.IncrementQuantity();
-            item.IncrementQuantity();
-            item.IncrementQuantity();
-
-            // Assert
-            Assert.Equal(4, item.Quantity);
-        }
-    }
-
-    // ---------------------------------------------------------------------------
-    // OrderPlacedEvent & OrderEventItem Domain Tests (50% → 100%)
-    // ---------------------------------------------------------------------------
-    public class OrderPlacedEventTests
-    {
-        [Fact]
-        public void OrderPlacedEvent_SetsAllProperties()
-        {
-            // Arrange
-            var items = new List<Sales.Domain.Events.OrderEventItem>
-            {
-                new("SKU-A", 2),
-                new("SKU-B", 1)
-            };
-            var now = DateTime.UtcNow;
-
-            // Act
-            var evt = new Sales.Domain.Events.OrderPlacedEvent("ORD-001", items, now);
-
-            // Assert
-            Assert.Equal("ORD-001", evt.OrderId);
-            Assert.Equal(2, evt.Items.Count());
-            Assert.Equal(now, evt.OccurredAt);
-        }
-
-        [Fact]
-        public void OrderEventItem_SetsSkuAndQuantity()
-        {
-            // Act
-            var item = new Sales.Domain.Events.OrderEventItem("SKU-TEST", 5);
-
-            // Assert
-            Assert.Equal("SKU-TEST", item.Sku);
+            Assert.Single(cart.Items);
+            var item = cart.Items.First();
+            Assert.Equal("SKU-1", item.Sku);
             Assert.Equal(5, item.Quantity);
         }
 
         [Fact]
-        public void OrderPlacedEvent_WithEmptyItems_AllowsEmptyCollection()
+        public void Cart_AddItem_QuantityZeroOrLess_ThrowsArgumentException()
         {
-            // Act
-            var evt = new Sales.Domain.Events.OrderPlacedEvent(
-                "ORD-EMPTY",
-                Enumerable.Empty<Sales.Domain.Events.OrderEventItem>(),
-                DateTime.UtcNow);
+            var cart = new CartEntity("user-1");
+            Assert.Throws<ArgumentException>(() => cart.AddItem("SKU-1", 0, 100));
+            Assert.Throws<ArgumentException>(() => cart.AddItem("SKU-1", -1, 100));
+        }
 
-            // Assert
-            Assert.Empty(evt.Items);
+        [Fact]
+        public void Cart_Clear_RemovesAllItems()
+        {
+            var cart = new CartEntity("user-1");
+            cart.AddItem("SKU-1", 2, 100);
+            cart.Clear();
+
+            Assert.Empty(cart.Items);
+            Assert.Equal(0, cart.TotalItems);
+            Assert.Equal(0, cart.SubTotal);
+        }
+
+        [Fact]
+        public void Cart_Calculates_SubTotal_Tax_And_Total_Correctly()
+        {
+            var cart = new CartEntity("user-1");
+            cart.AddItem("SKU-1", 2, 100); // SubTotal = 200
+            cart.AddItem("SKU-2", 1, 50);  // SubTotal = 250
+
+            Assert.Equal(3, cart.TotalItems);
+            Assert.Equal(250m, cart.SubTotal);
+            Assert.Equal(250m * 0.19m, cart.Tax); // 19% Tax
+            Assert.Equal(250m * 1.19m, cart.Total);
         }
     }
 
-    // ---------------------------------------------------------------------------
-    // Cart Domain Tests (boosting 96.8% → 100%)
-    // ---------------------------------------------------------------------------
-    public class CartDomainTests
+    // =========================================================================
+    // ShoppingCart Domain Tests
+    // =========================================================================
+    public class ShoppingCartTests
     {
         [Fact]
-        public void Constructor_NullUserId_ThrowsArgumentNullException()
+        public void ShoppingCart_Constructor_SetsId()
         {
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => new Cart(null!));
+            var cart = new ShoppingCart("session-1");
+            Assert.Equal("session-1", cart.Id);
+            Assert.Empty(cart.Items);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData(null)]
+        public void ShoppingCart_Constructor_EmptyId_ThrowsArgumentException(string? id)
+        {
+            Assert.Throws<ArgumentException>(() => new ShoppingCart(id!));
         }
 
         [Fact]
-        public void Clear_RemovesAllItems()
+        public void ShoppingCart_AddItem_AddsNewItem()
         {
-            // Arrange
-            var cart = new Cart("user-1");
-            cart.AddItem("p-1", "SKU-A", "Tractor A", "STD", 5000, "img");
-            cart.AddItem("p-2", "SKU-B", "Tractor B", "GPS", 7000, "img");
+            var cart = new ShoppingCart("session-1");
+            cart.AddItem(new CartItem("SKU-1", 2, 100));
 
-            // Act
-            cart.Clear();
+            Assert.Single(cart.Items);
+            Assert.Equal(200m, cart.TotalAmount);
+        }
 
-            // Assert
-            Assert.Equal(0, cart.TotalItems);
+        [Fact]
+        public void ShoppingCart_AddItem_ExistingSku_IncrementsQuantity()
+        {
+            var cart = new ShoppingCart("session-1");
+            cart.AddItem(new CartItem("SKU-1", 2, 100));
+            cart.AddItem(new CartItem("SKU-1", 3, 100));
+
+            Assert.Single(cart.Items);
+            Assert.Equal(500m, cart.TotalAmount);
+            Assert.Equal(5, cart.Items.First().Quantity);
+        }
+
+        [Fact]
+        public void ShoppingCart_RemoveItem_RemovesSku()
+        {
+            var cart = new ShoppingCart("session-1");
+            cart.AddItem(new CartItem("SKU-1", 2, 100));
+            cart.RemoveItem("SKU-1");
+
             Assert.Empty(cart.Items);
         }
 
         [Fact]
-        public void RemoveItem_NonExistentSku_DoesNotThrow()
+        public void ShoppingCart_Clear_RemovesAllItems()
         {
-            // Arrange
-            var cart = new Cart("user-1");
+            var cart = new ShoppingCart("session-1");
+            cart.AddItem(new CartItem("SKU-1", 2, 100));
+            cart.Clear();
 
-            // Act & Assert (should not throw)
-            cart.RemoveItem("SKU-MISSING");
-            Assert.Equal(0, cart.TotalItems);
+            Assert.Empty(cart.Items);
+        }
+    }
+
+    // =========================================================================
+    // CustomerOrder & OrderLineItem Domain Tests
+    // =========================================================================
+    public class CustomerOrderTests
+    {
+        [Fact]
+        public void CustomerOrder_Constructor_SetsProperties()
+        {
+            var orderId = Guid.NewGuid();
+            var lineItems = new List<OrderLineItem>
+            {
+                new OrderLineItem(Guid.NewGuid(), "SKU-1", 2, 100) { ProductName = "Tractor A" }
+            };
+
+            var order = new CustomerOrder(orderId, "customer-123", lineItems);
+
+            Assert.Equal(orderId, order.Id);
+            Assert.Equal("customer-123", order.CustomerId);
+            Assert.Single(order.Items);
+            Assert.Equal(200m, order.TotalAmount);
+            Assert.Equal("Pending", order.Status);
+            Assert.True(order.CreatedAt <= DateTime.UtcNow);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData(null)]
+        public void CustomerOrder_EmptyCustomerId_ThrowsArgumentException(string? customerId)
+        {
+            var lineItems = new List<OrderLineItem>
+            {
+                new OrderLineItem(Guid.NewGuid(), "SKU-1", 2, 100)
+            };
+            Assert.Throws<ArgumentException>(() => new CustomerOrder(Guid.NewGuid(), customerId!, lineItems));
         }
 
         [Fact]
-        public void Tax_IsCalculatedAt21Percent()
+        public void CustomerOrder_NullOrEmptyItems_ThrowsArgumentException()
         {
-            // Arrange
-            var cart = new Cart("user-tax");
-            cart.AddItem("p-1", "SKU-A", "Tractor A", "STD", 1000, "img");
-
-            // Assert: 1000 * 0.21 = 210
-            Assert.Equal(210, cart.Tax);
-            Assert.Equal(1210, cart.Total);
+            Assert.Throws<ArgumentException>(() => new CustomerOrder(Guid.NewGuid(), "customer-123", null!));
+            Assert.Throws<ArgumentException>(() => new CustomerOrder(Guid.NewGuid(), "customer-123", new List<OrderLineItem>()));
         }
 
         [Fact]
-        public void AddItem_DuplicateSku_IncrementsQuantityNotDuplicatesEntry()
+        public void CustomerOrder_Complete_UpdatesStatus()
         {
-            // Arrange
-            var cart = new Cart("user-dup");
-            cart.AddItem("p-1", "SKU-SAME", "Tractor A", "STD", 5000, "img");
+            var lineItems = new List<OrderLineItem>
+            {
+                new OrderLineItem(Guid.NewGuid(), "SKU-1", 2, 100)
+            };
+            var order = new CustomerOrder(Guid.NewGuid(), "customer-123", lineItems);
+            order.Complete();
 
-            // Act — add the same SKU again
-            cart.AddItem("p-1", "SKU-SAME", "Tractor A", "STD", 5000, "img");
-
-            // Assert — still 1 line item, but quantity = 2
-            Assert.Single(cart.Items);
-            Assert.Equal(2, cart.TotalItems);
-            Assert.Equal(10000, cart.SubTotal);
-        }
-
-        [Fact]
-        public void SubTotal_CalculatesCorrectlyWithMultipleItems()
-        {
-            // Arrange
-            var cart = new Cart("user-sub");
-            cart.AddItem("p-1", "SKU-A", "Tractor A", "STD", 5000, "img");
-            cart.AddItem("p-2", "SKU-B", "Tractor B", "GPS", 3000, "img");
-
-            // Assert
-            Assert.Equal(8000, cart.SubTotal);
-            Assert.Equal(2, cart.TotalItems);
+            Assert.Equal("Completed", order.Status);
         }
     }
 }
-

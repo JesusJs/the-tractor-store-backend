@@ -1,10 +1,12 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using TractorEcommerce.Api.Controllers;
 using TractorEcommerce.Modules.Catalog.Application.Ports;
 using TractorEcommerce.Modules.Catalog.Application.UseCase;
 using TractorEcommerce.Modules.Catalog.Domain.Entities;
+using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Exceptions;
 using Xunit;
 using static TractorEcommerce.Modules.Catalog.Application.DTOs.CatalogDtos;
 
@@ -13,13 +15,15 @@ namespace TractorEcommerce.Modules.Catalog.Tests.Controllers
     public class InventoryControllerTests
     {
         private readonly ICatalogRepository _catalogRepository;
+        private readonly ILogger<InventoryController> _logger;
         private readonly InventoryController _controller;
 
         public InventoryControllerTests()
         {
             _catalogRepository = Substitute.For<ICatalogRepository>();
+            _logger = Substitute.For<ILogger<InventoryController>>();
             var getInventoryStatus = new GetInventoryStatusUseCase(_catalogRepository);
-            _controller = new InventoryController(getInventoryStatus);
+            _controller = new InventoryController(getInventoryStatus, _logger);
         }
 
         [Fact]
@@ -47,11 +51,8 @@ namespace TractorEcommerce.Modules.Catalog.Tests.Controllers
             var sku = "MISSING-SKU";
             _catalogRepository.GetVariantBySkuAsync(sku).Returns((ProductVariant?)null);
 
-            // Act
-            var result = await _controller.GetInventory(sku);
-
-            // Assert
-            Assert.IsType<NotFoundObjectResult>(result.Result);
+            // Act & Assert
+            await Assert.ThrowsAsync<DomainNotFoundException>(() => _controller.GetInventory(sku));
         }
     }
 }

@@ -1,393 +1,289 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
-using TractorEcommerce.Modules.Sales.Application.Interfaces;
-using TractorEcommerce.Modules.Sales.Application.Interfaces.Repository;
-using TractorEcommerce.Modules.Sales.Application.Interfaces.Service;
-using TractorEcommerce.Modules.Sales.Application.UseCase;
-using TractorEcommerce.Modules.Sales.Domain.Entities;
-using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Events;
 using Xunit;
-using static TractorEcommerce.Modules.Sales.Application.DTOs.SalesDtos;
+using TractorEcommerce.Modules.Cart.Application.Commands;
+using TractorEcommerce.Modules.Cart.Application.Interfaces.Repository;
+using TractorEcommerce.Modules.Cart.Application.UseCase;
+using TractorEcommerce.Modules.Order.Application.DTOs;
+using TractorEcommerce.Modules.Order.Application.Interfaces.Repository;
+using TractorEcommerce.Modules.Order.Application.UseCase;
+using TractorEcommerce.Modules.Order.Application.UseCase.TractorEcommerce.Modules.Order.Application.UseCases;
+using TractorEcommerce.Modules.Shared.Application.Events;
+using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Events;
+using CartEntity = TractorEcommerce.Modules.Cart.Domain.Entities.Cart;
+using ShoppingCartEntity = TractorEcommerce.Modules.Cart.Domain.Entities.ShoppingCart;
+using CartItemEntity = TractorEcommerce.Modules.Cart.Domain.Entities.CartItem;
 
 namespace TractorEcommerce.Modules.Sales.Tests.Application
 {
-    // ---------------------------------------------------------------------------
-    // GetCartUseCase Tests
-    // ---------------------------------------------------------------------------
+    // =========================================================================
+    // Cart Use Case Tests
+    // =========================================================================
     public class GetCartUseCaseTests
     {
-        private readonly ISalesRepository _salesRepository;
+        private readonly ICartRepository _cartRepository;
         private readonly GetCartUseCase _useCase;
 
         public GetCartUseCaseTests()
         {
-            _salesRepository = Substitute.For<ISalesRepository>();
-            _useCase = new GetCartUseCase(_salesRepository);
+            _cartRepository = Substitute.For<ICartRepository>();
+            _useCase = new GetCartUseCase(_cartRepository);
         }
 
         [Fact]
-        public async Task Execute_WithExistingCart_ReturnsMappedDto()
+        public async Task Execute_WithExistingCart_ReturnsCart()
         {
-            // Arrange
             var userId = "user-1";
-            var cart = new Cart(userId);
-            cart.AddItem("p-1", "SKU-A", "Tractor A", "Standard", 10000, "img");
-            _salesRepository.GetCartByUserIdAsync(userId).Returns(cart);
+            var cart = new CartEntity(userId);
+            cart.AddItem("SKU-1", 1, 100);
+            _cartRepository.GetByUserIdAsync(userId).Returns(cart);
 
-            // Act
             var result = await _useCase.ExecuteAsync(userId);
 
-            // Assert
+            Assert.Same(cart, result);
             Assert.Equal(1, result.TotalItems);
-            Assert.Equal(10000, result.SubTotal);
-            Assert.Equal(2100, result.Tax);  // 10000 * 0.21
-            Assert.Equal(12100, result.Total);
         }
 
         [Fact]
-        public async Task Execute_WithNoCart_CreatesAndSavesEmptyCart()
+        public async Task Execute_WithNoExistingCart_ReturnsNewEmptyCart()
         {
-            // Arrange
-            var userId = "new-user";
-            _salesRepository.GetCartByUserIdAsync(userId).Returns((Cart?)null);
+            var userId = "user-2";
+            _cartRepository.GetByUserIdAsync(userId).Returns((CartEntity?)null);
 
-            // Act
             var result = await _useCase.ExecuteAsync(userId);
 
-            // Assert
-            Assert.Equal(0, result.TotalItems);
+            Assert.NotNull(result);
+            Assert.Equal(userId, result.UserId);
             Assert.Empty(result.Items);
-            await _salesRepository.Received(1).SaveCartAsync(Arg.Is<Cart>(c => c.UserId == userId));
         }
     }
 
-    // ---------------------------------------------------------------------------
-    // AddToCartUseCase Tests
-    // ---------------------------------------------------------------------------
     public class AddToCartUseCaseTests
     {
-        private readonly ISalesRepository _salesRepository;
-        private readonly ICatalogService _catalogService;
+        private readonly ICartRepository _cartRepository;
         private readonly AddToCartUseCase _useCase;
 
         public AddToCartUseCaseTests()
         {
-            _salesRepository = Substitute.For<ISalesRepository>();
-            _catalogService = Substitute.For<ICatalogService>();
-            _useCase = new AddToCartUseCase(_salesRepository, _catalogService);
+            _cartRepository = Substitute.For<ICartRepository>();
+            _useCase = new AddToCartUseCase(_cartRepository);
         }
 
         [Fact]
-        public async Task Execute_WithValidSku_AddsItemAndReturnsCart()
+        public async Task Execute_AddsItemAndSaves()
         {
-            // Arrange
             var userId = "user-1";
-            var sku = "SKU-VALID";
-            var productInfo = new CatalogProductInfo("p-1", sku, "Tractor A", "Standard", 8500, "img");
-            _catalogService.GetProductBySkuAsync(sku).Returns(productInfo);
+            var command = new AddToCartCommand(userId, "SKU-1", 2, 100);
+            var cart = new CartEntity(userId);
+            _cartRepository.GetByUserIdAsync(userId).Returns(cart);
 
-            var cart = new Cart(userId);
-            _salesRepository.GetCartByUserIdAsync(userId).Returns(cart);
+            var result = await _useCase.ExecuteAsync(command);
 
-            // Act
-            var result = await _useCase.ExecuteAsync(new AddToCartCommand(userId, sku));
-
-            // Assert
-            Assert.Equal(1, result.TotalItems);
-            Assert.Equal(8500, result.SubTotal);
-            await _salesRepository.Received(1).SaveCartAsync(Arg.Any<Cart>());
-        }
-
-        [Fact]
-        public async Task Execute_WithInvalidSku_ThrowsKeyNotFoundException()
-        {
-            // Arrange
-            var userId = "user-1";
-            var sku = "MISSING-SKU";
-            _catalogService.GetProductBySkuAsync(sku).Returns((CatalogProductInfo?)null);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(
-                () => _useCase.ExecuteAsync(new AddToCartCommand(userId, sku)));
-        }
-
-        [Fact]
-        public async Task Execute_SameSkuTwice_IncrementsQuantity()
-        {
-            // Arrange
-            var userId = "user-1";
-            var sku = "SKU-DUP";
-            var productInfo = new CatalogProductInfo("p-1", sku, "Tractor B", "GPS", 5000, "img");
-            _catalogService.GetProductBySkuAsync(sku).Returns(productInfo);
-
-            var cart = new Cart(userId);
-            cart.AddItem("p-1", sku, "Tractor B", "GPS", 5000, "img"); // pre-existing item
-            _salesRepository.GetCartByUserIdAsync(userId).Returns(cart);
-
-            // Act
-            var result = await _useCase.ExecuteAsync(new AddToCartCommand(userId, sku));
-
-            // Assert — quantity increments, still 1 distinct item
-            Assert.Equal(2, result.TotalItems);
             Assert.Single(result.Items);
-            Assert.Equal(10000, result.SubTotal);
-        }
-
-        [Fact]
-        public async Task Execute_WithNoExistingCart_CreatesNewCart()
-        {
-            // Arrange
-            var userId = "brand-new";
-            var sku = "SKU-NEW";
-            var productInfo = new CatalogProductInfo("p-2", sku, "Tractor C", "Auto", 12000, "img");
-            _catalogService.GetProductBySkuAsync(sku).Returns(productInfo);
-            _salesRepository.GetCartByUserIdAsync(userId).Returns((Cart?)null);
-
-            // Act
-            var result = await _useCase.ExecuteAsync(new AddToCartCommand(userId, sku));
-
-            // Assert
-            Assert.Equal(1, result.TotalItems);
-            Assert.Equal(12000, result.SubTotal);
+            Assert.Equal(2, result.TotalItems);
+            await _cartRepository.Received(1).SaveAsync(cart);
         }
     }
 
-    // ---------------------------------------------------------------------------
-    // RemoveFromCartUseCase Tests
-    // ---------------------------------------------------------------------------
     public class RemoveFromCartUseCaseTests
     {
-        private readonly ISalesRepository _salesRepository;
+        private readonly ICartRepository _cartRepository;
         private readonly RemoveFromCartUseCase _useCase;
 
         public RemoveFromCartUseCaseTests()
         {
-            _salesRepository = Substitute.For<ISalesRepository>();
-            _useCase = new RemoveFromCartUseCase(_salesRepository);
+            _cartRepository = Substitute.For<ICartRepository>();
+            _useCase = new RemoveFromCartUseCase(_cartRepository);
         }
 
         [Fact]
-        public async Task Execute_WithExistingItem_RemovesAndSaves()
+        public async Task Execute_ClearsCartAndSaves()
         {
-            // Arrange
             var userId = "user-1";
-            var sku = "SKU-DEL";
-            var cart = new Cart(userId);
-            cart.AddItem("p-1", sku, "Tractor A", "STD", 9000, "img");
-            _salesRepository.GetCartByUserIdAsync(userId).Returns(cart);
+            var cart = new CartEntity(userId);
+            cart.AddItem("SKU-1", 2, 100);
+            _cartRepository.GetByUserIdAsync(userId).Returns(cart);
 
-            // Act
-            var result = await _useCase.ExecuteAsync(userId, sku);
+            var result = await _useCase.ExecuteAsync(userId, "SKU-1");
 
-            // Assert
-            Assert.Equal(0, result.TotalItems);
-            await _salesRepository.Received(1).SaveCartAsync(Arg.Any<Cart>());
-        }
-
-        [Fact]
-        public async Task Execute_WithNoCart_ReturnsEmptyCart()
-        {
-            // Arrange
-            var userId = "ghost-user";
-            _salesRepository.GetCartByUserIdAsync(userId).Returns((Cart?)null);
-
-            // Act
-            var result = await _useCase.ExecuteAsync(userId, "ANY-SKU");
-
-            // Assert
-            Assert.Equal(0, result.TotalItems);
             Assert.Empty(result.Items);
-        }
-
-        [Fact]
-        public async Task Execute_RemovingNonExistentSku_LeavesCartUnchanged()
-        {
-            // Arrange
-            var userId = "user-2";
-            var cart = new Cart(userId);
-            cart.AddItem("p-1", "SKU-KEEP", "Tractor B", "GPS", 7000, "img");
-            _salesRepository.GetCartByUserIdAsync(userId).Returns(cart);
-
-            // Act
-            var result = await _useCase.ExecuteAsync(userId, "SKU-MISSING");
-
-            // Assert
-            Assert.Equal(1, result.TotalItems);
+            await _cartRepository.Received(1).SaveAsync(cart);
         }
     }
 
-    // ---------------------------------------------------------------------------
-    // CheckoutUseCase Tests
-    // ---------------------------------------------------------------------------
-    public class CheckoutUseCaseTests
+    public class ClearCartUseCaseTests
     {
-        private readonly ISalesRepository _salesRepository;
-        private readonly IInventoryService _inventoryService;
-        private readonly IEventBus _eventBus;
-        private readonly CheckoutUseCase _useCase;
+        private readonly ICartRepository _cartRepository;
+        private readonly ClearCartUseCase _useCase;
 
-        public CheckoutUseCaseTests()
+        public ClearCartUseCaseTests()
         {
-            _salesRepository = Substitute.For<ISalesRepository>();
-            _inventoryService = Substitute.For<IInventoryService>();
-            _eventBus = Substitute.For<IEventBus>();
-            _useCase = new CheckoutUseCase(_salesRepository, _inventoryService, _eventBus);
-        }
-
-        private IDbTransactionWrapper BuildTransaction()
-        {
-            var tx = Substitute.For<IDbTransactionWrapper>();
-            return tx;
+            _cartRepository = Substitute.For<ICartRepository>();
+            _useCase = new ClearCartUseCase(_cartRepository);
         }
 
         [Fact]
-        public async Task Execute_WithValidCart_ReturnsReceipt()
+        public async Task Execute_ClearsCartAndSaves()
         {
-            // Arrange
             var userId = "user-1";
-            var cart = new Cart(userId);
-            cart.AddItem("p-1", "SKU-A", "Tractor A", "STD", 10000, "img");
-            _salesRepository.GetCartByUserIdAsync(userId).Returns(cart);
-            _salesRepository.BeginTransactionAsync().Returns(BuildTransaction());
-            _inventoryService.DecreaseStockAsync("SKU-A", 1).Returns(true);
+            var cart = new CartEntity(userId);
+            cart.AddItem("SKU-1", 2, 100);
+            _cartRepository.GetByUserIdAsync(userId).Returns(cart);
 
-            var payload = new OrderPayloadDto("John", "Doe", "store-1", new List<string>());
+            await _useCase.ExecuteAsync(userId);
 
-            // Act
-            var receipt = await _useCase.ExecuteAsync(userId, payload);
+            Assert.Empty(cart.Items);
+            await _cartRepository.Received(1).SaveAsync(cart);
+        }
+    }
 
-            // Assert
-            Assert.Equal("John", receipt.FirstName);
-            Assert.Equal("Doe", receipt.LastName);
-            Assert.Equal("store-1", receipt.StoreId);
-            Assert.Equal(10000, receipt.SubTotal);
-            Assert.Equal(2100, receipt.Tax);
-            Assert.Equal(12100, receipt.Total);
+    public class CartCheckoutUseCaseTests
+    {
+        private readonly ICartSessionRepository _cartRepository;
+        private readonly IEventBus _eventBus;
+        private readonly ILogger<TractorEcommerce.Modules.Cart.Application.UseCase.CheckoutUseCase> _logger;
+        private readonly TractorEcommerce.Modules.Cart.Application.UseCase.CheckoutUseCase _useCase;
+
+        public CartCheckoutUseCaseTests()
+        {
+            _cartRepository = Substitute.For<ICartSessionRepository>();
+            _eventBus = Substitute.For<IEventBus>();
+            _logger = Substitute.For<ILogger<TractorEcommerce.Modules.Cart.Application.UseCase.CheckoutUseCase>>();
+            _useCase = new TractorEcommerce.Modules.Cart.Application.UseCase.CheckoutUseCase(_cartRepository, _eventBus, _logger);
         }
 
         [Fact]
-        public async Task Execute_WithEmptyCart_ThrowsInvalidOperationException()
+        public async Task Execute_EmptyCart_ThrowsInvalidOperationException()
         {
-            // Arrange
-            var userId = "empty-user";
-            _salesRepository.GetCartByUserIdAsync(userId).Returns((Cart?)null);
+            var cartId = "session-1";
+            _cartRepository.GetCartAsync(cartId).Returns((ShoppingCartEntity)null!);
 
-            var payload = new OrderPayloadDto("Jane", "Doe", "store-2", new List<string>());
-
-            // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _useCase.ExecuteAsync(userId, payload));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _useCase.ExecuteAsync(cartId, "customer-1"));
         }
 
         [Fact]
-        public async Task Execute_WithInsufficientStock_RollsBackAndThrows()
+        public async Task Execute_WithItems_PublishesEvent()
         {
-            // Arrange
-            var userId = "user-3";
-            var cart = new Cart(userId);
-            cart.AddItem("p-2", "SKU-B", "Tractor B", "GPS", 15000, "img");
-            _salesRepository.GetCartByUserIdAsync(userId).Returns(cart);
+            var cartId = "session-1";
+            var cart = new ShoppingCartEntity(cartId);
+            cart.AddItem(new CartItemEntity("SKU-1", 2, 100));
+            _cartRepository.GetCartAsync(cartId).Returns(cart);
 
-            var tx = BuildTransaction();
-            _salesRepository.BeginTransactionAsync().Returns(tx);
-            _inventoryService.DecreaseStockAsync("SKU-B", 1).Returns(false); // no stock
+            await _useCase.ExecuteAsync(cartId, "customer-1");
 
-            var payload = new OrderPayloadDto("John", "Smith", "store-3", new List<string>());
+            await _eventBus.Received(1).PublishAsync(
+                "checkout-requested-topic",
+                cartId,
+                Arg.Any<CheckoutRequestedEvent>()
+            );
+        }
+    }
 
-            // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _useCase.ExecuteAsync(userId, payload));
+    // =========================================================================
+    // Order Use Case Tests
+    // =========================================================================
+    public class OrderCheckoutUseCaseTests
+    {
+        private readonly IOrderRepository _orderRepository;
+        private readonly IEventBus _eventBus;
+        private readonly TractorEcommerce.Modules.Order.Application.UseCase.CheckoutUseCase _useCase;
 
-            await tx.Received(1).RollbackAsync();
+        public OrderCheckoutUseCaseTests()
+        {
+            _orderRepository = Substitute.For<IOrderRepository>();
+            _eventBus = Substitute.For<IEventBus>();
+            _useCase = new TractorEcommerce.Modules.Order.Application.UseCase.CheckoutUseCase(_orderRepository, _eventBus);
         }
 
         [Fact]
-        public async Task Execute_Success_ClearsCartAndPublishesEvent()
+        public async Task Execute_WithNoItems_ThrowsInvalidOperationException()
         {
-            // Arrange
-            var userId = "user-4";
-            var cart = new Cart(userId);
-            cart.AddItem("p-3", "SKU-C", "Tractor C", "Auto", 20000, "img");
-            _salesRepository.GetCartByUserIdAsync(userId).Returns(cart);
-            _salesRepository.BeginTransactionAsync().Returns(BuildTransaction());
-            _inventoryService.DecreaseStockAsync("SKU-C", 1).Returns(true);
+            var payload = new OrderPayloadDto("John", "Doe", "store-1", null, new List<OrderPayloadItemDto>());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _useCase.ExecuteAsync("user-1", payload));
+        }
 
-            var payload = new OrderPayloadDto("Maria", "Lopez", "store-4", new List<string>());
+        [Fact]
+        public async Task Execute_WithItems_SavesOrderAndPublishesEvent()
+        {
+            var payload = new OrderPayloadDto("John", "Doe", "store-1", "pickup-1", new List<OrderPayloadItemDto>
+            {
+                new OrderPayloadItemDto("prod-1", "SKU-1", "Tractor", "STD", 100, 2, "img")
+            });
 
-            // Act
-            var receipt = await _useCase.ExecuteAsync(userId, payload);
+            var receipt = await _useCase.ExecuteAsync("user-1", payload);
 
-            // Assert — cart is saved (cleared) and event is published
-            await _salesRepository.Received(1).SaveCartAsync(Arg.Any<Cart>());
+            Assert.NotNull(receipt);
+            Assert.StartsWith("ORD-", receipt.Id);
+            Assert.Equal(200, receipt.SubTotal);
+            Assert.Equal(38, receipt.Tax); // 200 * 0.19
+            Assert.Equal(238, receipt.Total);
+
+            await _orderRepository.Received(1).SaveOrderAsync(Arg.Is<OrderReceiptDto>(o => o.Id == receipt.Id));
             await _eventBus.Received(1).PublishAsync(
                 "sales.orders.placed",
-                Arg.Any<string>(),
-                Arg.Any<object>());
-        }
-
-        [Fact]
-        public async Task Execute_Success_GeneratesOrderIdWithOrdPrefix()
-        {
-            // Arrange
-            var userId = "user-5";
-            var cart = new Cart(userId);
-            cart.AddItem("p-4", "SKU-D", "Tractor D", "STD", 30000, "img");
-            _salesRepository.GetCartByUserIdAsync(userId).Returns(cart);
-            _salesRepository.BeginTransactionAsync().Returns(BuildTransaction());
-            _inventoryService.DecreaseStockAsync("SKU-D", 1).Returns(true);
-
-            var payload = new OrderPayloadDto("Pedro", "García", "store-5", new List<string>());
-
-            // Act
-            var receipt = await _useCase.ExecuteAsync(userId, payload);
-
-            // Assert
-            Assert.StartsWith("ORD-", receipt.Id);
+                receipt.Id,
+                Arg.Any<OrderPlacedKafkaEvent>()
+            );
         }
     }
 
-    // ---------------------------------------------------------------------------
-    // GetOrderByIdUseCase Tests
-    // ---------------------------------------------------------------------------
     public class GetOrderByIdUseCaseTests
     {
-        private readonly ISalesRepository _salesRepository;
+        private readonly IOrderRepository _orderRepository;
         private readonly GetOrderByIdUseCase _useCase;
 
         public GetOrderByIdUseCaseTests()
         {
-            _salesRepository = Substitute.For<ISalesRepository>();
-            _useCase = new GetOrderByIdUseCase(_salesRepository);
+            _orderRepository = Substitute.For<IOrderRepository>();
+            _useCase = new GetOrderByIdUseCase(_orderRepository);
         }
 
         [Fact]
-        public async Task Execute_WithExistingOrder_ReturnsReceipt()
+        public async Task Execute_ReturnsOrder()
         {
-            // Arrange
-            var orderId = "ORD-999888";
-            var receipt = new OrderReceiptDto(orderId, "Ana", "Ruiz", "store-1",
-                new List<string>(), new List<CartItemDto>(), 5000, 1050, 6050, DateTime.UtcNow);
-            _salesRepository.GetOrderByIdAsync(orderId).Returns(receipt);
+            var orderId = "ORD-123456";
+            var receipt = new OrderReceiptDto(orderId, "John", "Doe", "store-1", null, new List<OrderItemDetailDto>(), 100, 19, 119, DateTime.UtcNow, "Pending");
+            _orderRepository.GetOrderByIdAsync(orderId).Returns(receipt);
 
-            // Act
             var result = await _useCase.ExecuteAsync(orderId);
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(orderId, result!.Id);
-            Assert.Equal("Ana", result.FirstName);
+            Assert.Same(receipt, result);
+        }
+    }
+
+    public class CreateOrderUseCaseTests
+    {
+        private readonly IOrderRepository _orderRepository;
+        private readonly IEventBus _eventBus;
+        private readonly CreateOrderUseCase _useCase;
+
+        public CreateOrderUseCaseTests()
+        {
+            _orderRepository = Substitute.For<IOrderRepository>();
+            _eventBus = Substitute.For<IEventBus>();
+            _useCase = new CreateOrderUseCase(_orderRepository, _eventBus);
         }
 
         [Fact]
-        public async Task Execute_WithMissingOrder_ReturnsNull()
+        public async Task Execute_CreatesOrderAndSavesAndPublishes()
         {
-            // Arrange
-            _salesRepository.GetOrderByIdAsync("ORD-000000").Returns((OrderReceiptDto?)null);
+            var payload = new OrderPayloadDto("John", "Doe", "store-1", "pickup-1", new List<OrderPayloadItemDto>
+            {
+                new OrderPayloadItemDto("prod-1", "SKU-1", "Tractor", "STD", 100, 2, "img")
+            });
 
-            // Act
-            var result = await _useCase.ExecuteAsync("ORD-000000");
+            await _useCase.ExecuteAsync(payload);
 
-            // Assert
-            Assert.Null(result);
+            await _orderRepository.Received(1).SaveOrderAsync(Arg.Any<OrderReceiptDto>());
+            await _eventBus.Received(1).PublishAsync(
+                topic: "order.orders.placed",
+                key: Arg.Any<string>(),
+                message: Arg.Any<OrderPlacedIntegrationEvent>()
+            );
         }
     }
 }
