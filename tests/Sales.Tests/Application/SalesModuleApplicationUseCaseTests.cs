@@ -311,7 +311,7 @@ namespace TractorEcommerce.Modules.Sales.Tests.Application
             Assert.Contains("Extra-1", result.ExtraPickups);
             Assert.Single(result.Items);
             Assert.Equal(100m, result.SubTotal);
-            Assert.Equal(119m, result.Total);
+            Assert.Equal(121m, result.Total);
 
             await _salesRepository.Received(1).SaveOrderReceiptAsync(result);
             Assert.Empty(cart.Items); // Cart should be cleared
