@@ -1,0 +1,43 @@
+name: Backend CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ] # Cambia a master si tu rama principal se llama así
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    name: Compilación y Pruebas (CI)
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Descargar el código del repositorio
+      uses: actions/checkout@v4
+
+    - name: Configurar el entorno de .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Restaurar dependencias (NuGet)
+      run: dotnet restore
+
+    - name: Compilar el proyecto (Release)
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Ejecutar Pruebas Unitarias e Integración (C1)
+      run: dotnet test --no-build --verbosity normal --collect:"XPlat Code Coverage"
+      # Esto ejecuta tus tests y genera el reporte de cobertura automática para SonarCloud
+
+  deploy:
+    name: Despliegue Automático (CD)
+    needs: build-and-test # Solo se ejecuta si los tests del paso anterior pasaron con éxito
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Alerta de Despliegue a Render
+      run: |
+        echo "El CI pasó con éxito. Notificando a Render para iniciar el despliegue..."
+        curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
