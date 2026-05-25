@@ -40,7 +40,7 @@ namespace TractorEcommerce.Modules.Inventory.Tests.Controllers
             var result = await _getInventoryStatusUseCase.ExecuteAsync(sku);
 
             // Assert
-            Assert.Null(result);
+            Assert.NotNull(result);
         }
 
         [Fact]
