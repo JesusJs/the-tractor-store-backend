@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -10,13 +10,9 @@ using TractorEcommerce.Modules.Cart.Application.UseCase;
 
 namespace TractorEcommerce.Api.Controllers
 {
-
-
-    namespace TractorEcommerce.Api.Controllers
-    {
-        [ApiController]
-        [Route("api/v1/cart")]
-        public class CartController : ControllerBase
+    [ApiController]
+    [Route("api/v1/cart")]
+    public class CartController : ControllerBase
         {
             private readonly AddToCartUseCase _addToCartUseCase;
             private readonly RemoveFromCartUseCase _removeFromCartUseCase;
@@ -101,5 +97,4 @@ namespace TractorEcommerce.Api.Controllers
         }
 
         public record AddToCartRequest(string Sku, decimal Price);
-    }
 }
