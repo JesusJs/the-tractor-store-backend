@@ -1,4 +1,8 @@
 using System;
+using System.Reflection;
+using System.Collections.Generic;
+using TractorEcommerce.Modules.Inventory.Application.Events;
+using TractorEcommerce.Modules.Inventory.Application.IntegrationEvents;
 using TractorEcommerce.Modules.Inventory.Domain.Entities;
 
 namespace TractorEcommerce.Modules.Inventory.Tests.Domain
@@ -116,12 +120,26 @@ namespace TractorEcommerce.Modules.Inventory.Tests.Domain
             Assert.Throws<ArgumentException>(() => stock.AddStock(-1));
         }
 
-        [Fact]
+            [Fact]
         public void AddStock_LargeQuantity_WorksCorrectly()
         {
             var stock = new SkuStock("TX-001", 0);
             stock.AddStock(1000);
             Assert.Equal(1000, stock.AvailableStock);
+        }
+
+        [Fact]
+        public void SkuStock_PrivateConstructor_CanBeInstantiatedViaReflection()
+        {
+            var type = typeof(SkuStock);
+            var ctor = type.GetConstructor(
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                null, Type.EmptyTypes, null);
+
+            Assert.NotNull(ctor);
+            var instance = ctor!.Invoke(null);
+            Assert.NotNull(instance);
+            Assert.IsType<SkuStock>(instance);
         }
     }
 
@@ -269,6 +287,151 @@ namespace TractorEcommerce.Modules.Inventory.Tests.Domain
             var item = new InventoryItem(Guid.NewGuid(), "TX-FAIL", 1);
             var ex = Assert.Throws<InvalidOperationException>(() => item.DeductStock(10));
             Assert.Contains("TX-FAIL", ex.Message);
+        }
+    }
+
+    // =========================================================================
+    // Private Constructor Coverage via Reflection (EF Core proxy support)
+    // =========================================================================
+    public class InventoryPrivateConstructorTests
+    {
+        [Fact]
+        public void InventoryItem_PrivateParameterlessConstructor_CanBeInstantiatedViaReflection()
+        {
+            var type = typeof(InventoryItem);
+            var ctor = type.GetConstructor(
+                BindingFlags.Instance | BindingFlags.NonPublic,
+                null, Type.EmptyTypes, null);
+
+            Assert.NotNull(ctor);
+            var instance = ctor!.Invoke(null);
+            Assert.NotNull(instance);
+            Assert.IsType<InventoryItem>(instance);
+        }
+    }
+
+    // =========================================================================
+    // Inventory Integration Events Tests
+    // =========================================================================
+    public class InventoryIntegrationEventTests
+    {
+        [Fact]
+        public void OrderPlacedIntegrationEvent_Constructor_SetsAllProperties()
+        {
+            var orderId = Guid.NewGuid();
+            var items = new List<OrderStockItemDto>
+            {
+                new OrderStockItemDto("TX-001", 5),
+                new OrderStockItemDto("TX-002", 3)
+            };
+
+            var evt = new OrderPlacedIntegrationEvent(orderId, "customer-1", items);
+
+            Assert.Equal(orderId, evt.OrderId);
+            Assert.Equal("customer-1", evt.CustomerId);
+            Assert.Equal(2, evt.Items.Count);
+        }
+
+        [Fact]
+        public void OrderStockItemDto_Constructor_SetsAllProperties()
+        {
+            var dto = new OrderStockItemDto("TX-SKU", 10);
+
+            Assert.Equal("TX-SKU", dto.Sku);
+            Assert.Equal(10, dto.Quantity);
+        }
+
+        [Fact]
+        public void OrderStockItemDto_RecordEquality_WorksCorrectly()
+        {
+            var dto1 = new OrderStockItemDto("TX-001", 5);
+            var dto2 = new OrderStockItemDto("TX-001", 5);
+            var dto3 = new OrderStockItemDto("TX-002", 5);
+
+            Assert.Equal(dto1, dto2);
+            Assert.NotEqual(dto1, dto3);
+        }
+
+        [Fact]
+        public void InventoryReservedIntegrationEvent_Constructor_SetsAllProperties()
+        {
+            var orderId = Guid.NewGuid();
+            var reservedAt = DateTime.UtcNow;
+
+            var evt = new InventoryReservedIntegrationEvent(orderId, reservedAt);
+
+            Assert.Equal(orderId, evt.OrderId);
+            Assert.Equal(reservedAt, evt.ReservedAt);
+        }
+
+        [Fact]
+        public void InventoryReservedIntegrationEvent_RecordEquality_WorksCorrectly()
+        {
+            var orderId = Guid.NewGuid();
+            var at = DateTime.UtcNow;
+            var evt1 = new InventoryReservedIntegrationEvent(orderId, at);
+            var evt2 = new InventoryReservedIntegrationEvent(orderId, at);
+
+            Assert.Equal(evt1, evt2);
+        }
+
+        [Fact]
+        public void InventoryReservationFailedIntegrationEvent_Constructor_SetsAllProperties()
+        {
+            var orderId = Guid.NewGuid();
+            var failedAt = DateTime.UtcNow;
+
+            var evt = new InventoryReservationFailedIntegrationEvent(orderId, "Insufficient stock", failedAt);
+
+            Assert.Equal(orderId, evt.OrderId);
+            Assert.Equal("Insufficient stock", evt.Reason);
+            Assert.Equal(failedAt, evt.FailedAt);
+        }
+
+        [Fact]
+        public void InventoryReservationFailedIntegrationEvent_RecordEquality_WorksCorrectly()
+        {
+            var orderId = Guid.NewGuid();
+            var at = DateTime.UtcNow;
+            var evt1 = new InventoryReservationFailedIntegrationEvent(orderId, "No stock", at);
+            var evt2 = new InventoryReservationFailedIntegrationEvent(orderId, "No stock", at);
+
+            Assert.Equal(evt1, evt2);
+        }
+    }
+
+    // =========================================================================
+    // ProductStockUpdatedEvent Tests
+    // =========================================================================
+    public class ProductStockUpdatedEventTests
+    {
+        [Fact]
+        public void ProductStockUpdatedEvent_Constructor_SetsAllProperties()
+        {
+            var evt = new ProductStockUpdatedEvent("TX-001", 42);
+
+            Assert.Equal("TX-001", evt.Sku);
+            Assert.Equal(42, evt.NewStock);
+        }
+
+        [Fact]
+        public void ProductStockUpdatedEvent_RecordEquality_WorksCorrectly()
+        {
+            var evt1 = new ProductStockUpdatedEvent("TX-001", 42);
+            var evt2 = new ProductStockUpdatedEvent("TX-001", 42);
+            var evt3 = new ProductStockUpdatedEvent("TX-002", 42);
+
+            Assert.Equal(evt1, evt2);
+            Assert.NotEqual(evt1, evt3);
+        }
+
+        [Fact]
+        public void ProductStockUpdatedEvent_DifferentStock_AreNotEqual()
+        {
+            var evt1 = new ProductStockUpdatedEvent("TX-001", 10);
+            var evt2 = new ProductStockUpdatedEvent("TX-001", 20);
+
+            Assert.NotEqual(evt1, evt2);
         }
     }
 }

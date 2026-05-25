@@ -1,7 +1,9 @@
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
 using TractorEcommerce.Modules.Sales.Domain.Entities;
+using TractorEcommerce.Modules.Sales.Domain.Events;
 
 namespace TractorEcommerce.Modules.Sales.Tests.Domain
 {
@@ -256,6 +258,73 @@ namespace TractorEcommerce.Modules.Sales.Tests.Domain
             Assert.NotEqual(item1.Sku, item2.Sku);
             Assert.NotEqual(item1.Price, item2.Price);
             Assert.NotEqual(item1.Quantity, item2.Quantity);
+        }
+    }
+
+    // =========================================================================
+    // Private Constructor Coverage via Reflection (EF Core proxy support)
+    // =========================================================================
+    public class SalesDomainPrivateConstructorTests
+    {
+        [Fact]
+        public void Cart_PrivateParameterlessConstructor_CanBeInstantiatedViaReflection()
+        {
+            var type = typeof(TractorEcommerce.Modules.Sales.Domain.Entities.Cart);
+            var ctor = type.GetConstructor(
+                BindingFlags.Instance | BindingFlags.NonPublic,
+                null, Type.EmptyTypes, null);
+
+            Assert.NotNull(ctor);
+            var instance = ctor!.Invoke(null);
+            Assert.NotNull(instance);
+            Assert.IsType<TractorEcommerce.Modules.Sales.Domain.Entities.Cart>(instance);
+        }
+
+        [Fact]
+        public void OrderReceipt_PrivateParameterlessConstructor_CanBeInstantiatedViaReflection()
+        {
+            var type = typeof(TractorEcommerce.Modules.Sales.Domain.Entities.OrderReceipt);
+            var ctor = type.GetConstructor(
+                BindingFlags.Instance | BindingFlags.NonPublic,
+                null, Type.EmptyTypes, null);
+
+            Assert.NotNull(ctor);
+            var instance = ctor!.Invoke(null);
+            Assert.NotNull(instance);
+            Assert.IsType<TractorEcommerce.Modules.Sales.Domain.Entities.OrderReceipt>(instance);
+        }
+    }
+
+    public class SalesDomainEventTests
+    {
+        [Fact]
+        public void OrderPlacedEvent_Record_PropertiesAndEquality()
+        {
+            var occurredAt = DateTime.UtcNow;
+            var item1 = new OrderEventItem("SKU-1", 2);
+            var item2 = new OrderEventItem("SKU-1", 2);
+            var item3 = new OrderEventItem("SKU-2", 1);
+
+            // Assert OrderEventItem properties and equality
+            Assert.Equal("SKU-1", item1.Sku);
+            Assert.Equal(2, item1.Quantity);
+            Assert.Equal(item1, item2);
+            Assert.NotEqual(item1, item3);
+            Assert.Contains("SKU-1", item1.ToString());
+
+            var itemsList = new List<OrderEventItem> { item1 };
+            var evt1 = new OrderPlacedEvent("ORD-1", itemsList, occurredAt);
+            var evt2 = new OrderPlacedEvent("ORD-1", itemsList, occurredAt);
+            var evt3 = new OrderPlacedEvent("ORD-2", itemsList, occurredAt);
+
+            // Assert OrderPlacedEvent properties and equality
+            Assert.Equal("ORD-1", evt1.OrderId);
+            Assert.Same(itemsList, evt1.Items);
+            Assert.Equal(occurredAt, evt1.OccurredAt);
+            Assert.Equal(evt1, evt2);
+            Assert.NotEqual(evt1, evt3);
+            Assert.Contains("ORD-1", evt1.ToString());
+            Assert.Equal(evt1.GetHashCode(), evt2.GetHashCode());
         }
     }
 }
