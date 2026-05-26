@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
@@ -15,11 +15,13 @@ namespace TractorEcommerce.Modules.Order.Application.UseCase
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IEventBus _eventBus;
+        private readonly ILogger<CheckoutUseCase> _logger;
 
-        public CheckoutUseCase(IOrderRepository orderRepository, IEventBus eventBus)
+        public CheckoutUseCase(IOrderRepository orderRepository, IEventBus eventBus, ILogger<CheckoutUseCase> logger)
         {
             _orderRepository = orderRepository;
             _eventBus = eventBus;
+            _logger = logger;
         }
 
         public async Task<OrderReceiptDto> ExecuteAsync(string userId, OrderPayloadDto payload)
@@ -63,11 +65,18 @@ namespace TractorEcommerce.Modules.Order.Application.UseCase
                 Items: orderItems.Select(i => new KafkaItem(i.VariantId, i.Quantity)).ToList()
             );
 
-            await _eventBus.PublishAsync(
-                topic: "sales.orders.placed",
-                key: orderId,
-                message: kafkaPayload
-            );
+            try
+            {
+                await _eventBus.PublishAsync(
+                    topic: "sales.orders.placed",
+                    key: orderId,
+                    message: kafkaPayload
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fallo al publicar el evento de orden {OrderId} en Kafka. La orden fue guardada localmente.", orderId);
+            }
 
             return receipt;
         }
