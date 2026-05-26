@@ -143,6 +143,7 @@ namespace TractorEcommerce.Modules.Sales.Tests.Controllers
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IEventBus _eventBus;
+        private readonly ILogger<OrderUseCase.CheckoutUseCase> _checkoutUseCaseLogger;
         private readonly OrderUseCase.CheckoutUseCase _checkoutUseCase;
         private readonly ILogger<OrderController> _logger;
         private readonly OrderController _controller;
@@ -152,7 +153,8 @@ namespace TractorEcommerce.Modules.Sales.Tests.Controllers
         {
             _orderRepository = Substitute.For<IOrderRepository>();
             _eventBus = Substitute.For<IEventBus>();
-            _checkoutUseCase = new OrderUseCase.CheckoutUseCase(_orderRepository, _eventBus);
+            _checkoutUseCaseLogger = Substitute.For<ILogger<OrderUseCase.CheckoutUseCase>>();
+            _checkoutUseCase = new OrderUseCase.CheckoutUseCase(_orderRepository, _eventBus, _checkoutUseCaseLogger);
             _logger = Substitute.For<ILogger<OrderController>>();
 
             _controller = new OrderController(

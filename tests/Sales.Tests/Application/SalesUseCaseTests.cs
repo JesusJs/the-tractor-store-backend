@@ -190,13 +190,15 @@ namespace TractorEcommerce.Modules.Sales.Tests.Application
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IEventBus _eventBus;
+        private readonly ILogger<TractorEcommerce.Modules.Order.Application.UseCase.CheckoutUseCase> _logger;
         private readonly TractorEcommerce.Modules.Order.Application.UseCase.CheckoutUseCase _useCase;
 
         public OrderCheckoutUseCaseTests()
         {
             _orderRepository = Substitute.For<IOrderRepository>();
             _eventBus = Substitute.For<IEventBus>();
-            _useCase = new TractorEcommerce.Modules.Order.Application.UseCase.CheckoutUseCase(_orderRepository, _eventBus);
+            _logger = Substitute.For<ILogger<TractorEcommerce.Modules.Order.Application.UseCase.CheckoutUseCase>>();
+            _useCase = new TractorEcommerce.Modules.Order.Application.UseCase.CheckoutUseCase(_orderRepository, _eventBus, _logger);
         }
 
         [Fact]
