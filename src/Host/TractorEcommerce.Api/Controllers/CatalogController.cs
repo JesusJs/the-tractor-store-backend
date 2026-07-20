@@ -44,6 +44,7 @@ namespace TractorEcommerce.Api.Controllers
                 throw new ArgumentException("El filtro de categoría no puede estar vacío.", nameof(filter));
 
             //var result = await _getCatalogCategory.ExecuteAsync(filter);
+
             //return Ok(result);
             return Ok("result");
         }
