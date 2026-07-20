@@ -18,68 +18,81 @@ namespace TractorEcommerce.Modules.Catalog.Infrastructure.Repository
             _context = context;
         }
 
-        public async Task<IEnumerable<Product>> GetByCategoryAsync(string category)
+        public async Task<Category> GetCategoryBySlug(string slug)
         {
-            if (string.Equals(category, "all", StringComparison.OrdinalIgnoreCase))
-            {
-                return await _context.Products
-                    .Include(p => p.Variants)
-                    .ToListAsync();
-            }
-
-            var categoryLower = category.ToLower();
-            return await _context.Products
-                .Include(p => p.Variants)
-                .Where(p => p.Category == categoryLower)
-                .ToListAsync();
+            return await _context.Categories.Where(e => e.Slug == slug).FirstOrDefaultAsync();
+        
         }
 
-        public async Task<Product?> GetByIdAsync(string id)
-        {
-            return await _context.Products
-                .Include(p => p.Variants)
-                .FirstOrDefaultAsync(p => p.Id == id);
+        public async Task<List<Category>> GetCategoryById(Guid category_id)
+        { 
+            return await _context.Categories.Where(e=> e.Id == category_id).ToListAsync();
         }
 
-        public async Task<ProductVariant?> GetVariantBySkuAsync(string sku)
-        {
-            return await _context.ProductVariants
-                .FirstOrDefaultAsync(v => v.Sku == sku);
-        }
+        //public async Task<IEnumerable<Product>> GetByCategoryAsync(string category)
+        //{
+        //    if (string.Equals(category, "all", StringComparison.OrdinalIgnoreCase))
+        //    {
+        //        return await _context.Products
+        //            .Include(p => p.Variants)
+        //            .ToListAsync();
+        //    }
 
-        public async Task<IEnumerable<string>> GetActiveCategoriesAsync()
-        {
-            return await _context.Products
-                .Select(p => p.Category)
-                .Distinct()
-                .ToListAsync();
-        }
+        //    var categoryLower = category.ToLower();
+        //    return await _context.Products
+        //        .Include(p => p.Variants)
+        //        //.Where(p => p.Category == categoryLower)
+        //        .ToListAsync();
+        //}
 
-        public async Task<IEnumerable<Store>> GetStoresAsync()
-        {
-            return await _context.Stores.ToListAsync();
-        }
+        //public async Task<Product?> GetByIdAsync(string id)
+        //{
+        //    return await _context.Products
+        //        .Include(p => p.Variants)
+        //        .FirstOrDefaultAsync();
+        //        //.FirstOrDefaultAsync(p => p.Id == id);
+        //}
 
-        public async Task<IEnumerable<Product>> GetProductsBySkusAsync(IEnumerable<string> skus)
-        {
-            var skuList = skus.Select(s => s.ToUpper()).ToList();
+        //public async Task<ProductVariant?> GetVariantBySkuAsync(string sku)
+        //{
+        //    return await _context.ProductVariants
+        //        .FirstOrDefaultAsync(v => v.Sku == sku);
+        //}
 
-            var productIds = await _context.ProductVariants
-                .Where(v => skuList.Contains(v.Sku.ToUpper()))
-                .Select(v => v.ProductId)
-                .Distinct()
-                .ToListAsync();
+        //public async Task<IEnumerable<string>> GetActiveCategoriesAsync()
+        //{
+        //    return await _context.Products
+        //        //.Select(p => p.Category)
+        //        .Select(p => p.Description)
+        //        .Distinct()
+        //        .ToListAsync();
+        //}
 
-            return await _context.Products
-                .Include(p => p.Variants)
-                .Where(p => productIds.Contains(p.Id))
-                .ToListAsync();
-        }
+        //public async Task<IEnumerable<Store>> GetStoresAsync()
+        //{
+        //    return await _context.Stores.ToListAsync();
+        //}
 
-        public async Task UpdateVariantAsync(ProductVariant variant)
-        {
-            _context.ProductVariants.Update(variant);
-            await _context.SaveChangesAsync();
-        }
+        //public async Task<IEnumerable<Product>> GetProductsBySkusAsync(IEnumerable<string> skus)
+        //{
+        //    var skuList = skus.Select(s => s.ToUpper()).ToList();
+
+        //    var productIds = await _context.ProductVariants
+        //        .Where(v => skuList.Contains(v.Sku.ToUpper()))
+        //        .Select(v => v.ProductId)
+        //        .Distinct()
+        //        .ToListAsync();
+
+        //    return await _context.Products
+        //        .Include(p => p.Variants)
+        //        .Where(p => productIds.Contains(p.Id))
+        //        .ToListAsync();
+        //}
+
+        //public async Task UpdateVariantAsync(ProductVariant variant)
+        //{
+        //    _context.ProductVariants.Update(variant);
+        //    await _context.SaveChangesAsync();
+        //}
     }
 }

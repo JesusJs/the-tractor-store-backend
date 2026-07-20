@@ -8,8 +8,8 @@ namespace TractorEcommerce.Modules.Cart.Domain.Entities
     {
         // El Id del carrito será el SessionId único almacenado en la cookie HttpOnly
         public string Id { get; private set; }
-        private readonly List<CartItem> _items = new();
-        public IReadOnlyCollection<CartItem> Items => _items.AsReadOnly();
+        private readonly List<CartItemEntity> _items = new();
+        public IReadOnlyCollection<CartItemEntity> Items => _items.AsReadOnly();
 
         public ShoppingCart(string id)
         {
@@ -18,7 +18,7 @@ namespace TractorEcommerce.Modules.Cart.Domain.Entities
             Id = id;
         }
 
-        public void AddItem(CartItem newItem)
+        public void AddItem(CartItemEntity newItem)
         {
             var existingItem = _items.FirstOrDefault(i => i.Sku.Equals(newItem.Sku, StringComparison.OrdinalIgnoreCase));
 
@@ -26,7 +26,7 @@ namespace TractorEcommerce.Modules.Cart.Domain.Entities
             {
                 // Como CartItem es un record inmutable, usamos la expresión 'with' para actualizar la cantidad
                 _items.Remove(existingItem);
-                _items.Add(existingItem with { Quantity = existingItem.Quantity + newItem.Quantity });
+                //_items.Add(existingItem with { Quantity = existingItem.Quantity + newItem.Quantity });
             }
             else
             {

@@ -11,7 +11,7 @@ namespace TractorEcommerce.Modules.Cart.Infrastructure.Data
         }
 
         // Ruta explícita completa para el DbSet
-        public DbSet<TractorEcommerce.Modules.Cart.Domain.Entities.Cart> Carts => Set<TractorEcommerce.Modules.Cart.Domain.Entities.Cart>();
+        public DbSet<CartEntity> Carts => Set<CartEntity>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

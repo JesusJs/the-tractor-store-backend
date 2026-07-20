@@ -1,50 +1,58 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 
 namespace TractorEcommerce.Modules.Cart.Domain.Entities
 {
-
-    public class Cart
+    public class CartEntity
     {
-        private readonly List<CartItem> _items = new();
+        private readonly List<CartItemEntity> _items = new();
 
         // Constructor requerido por EF Core para la reconstrucción desde la BD
-        private Cart() { }
+        private CartEntity() { }
 
-        public Cart(string userId)
+        public CartEntity(string userId)
         {
             if (string.IsNullOrWhiteSpace(userId))
                 throw new ArgumentException("El UserId/SessionId es requerido para crear un carrito.", nameof(userId));
 
+            Id = Guid.NewGuid();
             UserId = userId;
+            CreatedAt = DateTime.UtcNow;
         }
 
+        public Guid Id { get; private set; }
         public string UserId { get; private set; } = null!;
-        public IReadOnlyCollection<CartItem> Items => _items.AsReadOnly();
+        public DateTime CreatedAt { get; private set; }
 
-        // Propiedades calculadas dinámicas o con setters privados para EF Core
+        public IReadOnlyCollection<CartItemEntity> Items => _items.AsReadOnly();
+
         public int TotalItems => _items.Sum(i => i.Quantity);
         public decimal SubTotal => _items.Sum(i => i.Total);
-        public decimal Tax => SubTotal * 0.19m; // Ejemplo IVA Colombia 19%
+        public decimal Tax => SubTotal * 0.19m;
         public decimal Total => SubTotal + Tax;
 
         public void AddItem(string sku, int quantity, decimal price)
         {
-            if (quantity <= 0) throw new ArgumentException("La cantidad debe ser mayor a cero.", nameof(quantity));
+            if (quantity <= 0)
+                throw new ArgumentException("La cantidad debe ser mayor a cero.", nameof(quantity));
 
             var existingItem = _items.FirstOrDefault(i => i.Sku == sku);
-
             if (existingItem != null)
             {
-                // Como el record es inmutable, lo reemplazamos sumando la cantidad
-                _items.Remove(existingItem);
-                _items.Add(existingItem with { Quantity = existingItem.Quantity + quantity });
+                existingItem.IncreaseQuantity(quantity); // muta, no reemplaza
             }
             else
             {
-                _items.Add(new CartItem(sku, quantity, price));
+                _items.Add(new CartItemEntity(Id, sku, quantity, price));
             }
+        }
+
+        public void RemoveItem(string sku)
+        {
+            var item = _items.FirstOrDefault(i => i.Sku == sku);
+            if (item != null)
+                _items.Remove(item);
         }
 
         public void Clear()

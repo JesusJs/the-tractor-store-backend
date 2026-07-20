@@ -13,16 +13,32 @@ namespace TractorEcommerce.Modules.Catalog.Application.UseCase
             _catalogRepository = catalogRepository;
         }
 
-        public async Task<IEnumerable<StoreResponse>> ExecuteAsync()
+        public async Task<string> GetCategory(string category)
         {
-            var stores = await _catalogRepository.GetStoresAsync();
-            return stores.Select(s => new StoreResponse(
-             s.Id,
-             s.Name,
-             s.Address ?? string.Empty,
-             s.City ?? string.Empty,
-             s.Image ?? string.Empty
-            )).ToList();
+            var slug = await _catalogRepository.GetCategoryBySlug(category);
+
+            if (slug != null)
+            {
+                await _catalogRepository.GetCategoryById(slug.Id);
+            }
+
+            // Falta crear Dto para devolver la categoria.
+            // Crear mapper para convertir a Dto.
+            return "prueba";
         }
+
+
+        //public async Task<IEnumerable<StoreResponse>> ExecuteAsync()
+        //{
+        //    var stores = await _catalogRepository.GetStoresAsync();
+        //    return stores.Select(s => new StoreResponse(
+        //     s.Id,
+        //     s.Name,
+        //     s.Address ?? string.Empty,
+        //     s.City ?? string.Empty,
+        //     s.Image ?? string.Empty
+        //    )).ToList();
+        //}
     }
 }
+ 

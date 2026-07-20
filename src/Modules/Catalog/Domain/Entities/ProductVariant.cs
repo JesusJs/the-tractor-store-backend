@@ -6,27 +6,33 @@ namespace TractorEcommerce.Modules.Catalog.Domain.Entities
 {
     public class ProductVariant
     {
-        public string Sku { get; private set; }
-        public string ProductId { get; private set; }
-        public string name { get; private set; }
-        public int Stock { get; private set; }
+        private ProductVariant() { } // EF Core
 
-        private ProductVariant() { }
-
-        public ProductVariant(string sku, string productId, int stock)
+        public ProductVariant(
+            Guid productId,
+            string sku,
+            string name,
+            decimal price,
+            IReadOnlyCollection<string> highlights)
         {
-            if (string.IsNullOrWhiteSpace(sku)) throw new ArgumentException("El SKU no puede estar vacío.");
-            if (stock < 0) throw new ArgumentException("El stock no puede ser negativo.");
+            if (string.IsNullOrWhiteSpace(sku))
+                throw new ArgumentException("El SKU es requerido.", nameof(sku));
 
-            Sku = sku;
+            Id = Guid.NewGuid();
             ProductId = productId;
-            Stock = stock;
+            Sku = sku;
+            Name = name;
+            Price = price;
+            Highlights = highlights?.ToArray() ?? Array.Empty<string>();
         }
 
-        public void UpdateStock(int newStock)
-        {
-            if (newStock < 0) throw new ArgumentException("El stock no puede ser negativo.");
-            Stock = newStock;
-        }
+        public Guid Id { get; private set; }
+        public Guid ProductId { get; private set; }
+        public string Sku { get; private set; } = null!;
+        public string Name { get; private set; } = null!;
+        public decimal Price { get; private set; }
+        public string[] Highlights { get; private set; } = Array.Empty<string>();
+
+        // Nota: "Stock" ya NO vive aquí. Vive en inventory_stocks, otro módulo.
     }
 }

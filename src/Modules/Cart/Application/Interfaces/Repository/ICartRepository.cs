@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TractorEcommerce.Modules.Cart.Domain.Entities;
 
 namespace TractorEcommerce.Modules.Cart.Application.Interfaces.Repository
 {
     public interface ICartRepository
     {
-        Task<TractorEcommerce.Modules.Cart.Domain.Entities.Cart?> GetByUserIdAsync(string userId);
+        Task<CartEntity?> GetByUserIdAsync(string userId);
 
-        Task SaveAsync(TractorEcommerce.Modules.Cart.Domain.Entities.Cart cart);
+        Task SaveAsync(CartEntity cart);
     }
 }

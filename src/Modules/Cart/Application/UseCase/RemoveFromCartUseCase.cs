@@ -11,7 +11,7 @@ namespace TractorEcommerce.Modules.Cart.Application.UseCase
 
         public RemoveFromCartUseCase(ICartRepository cartRepository) { _cartRepository = cartRepository; }
 
-        public async Task<TractorEcommerce.Modules.Cart.Domain.Entities.Cart> ExecuteAsync(string cartId, string sku)
+        public async Task<TractorEcommerce.Modules.Cart.Domain.Entities.CartEntity> ExecuteAsync(string cartId, string sku)
         {
             var cart = await _cartRepository.GetByUserIdAsync(cartId);
             if (cart != null)
@@ -20,7 +20,7 @@ namespace TractorEcommerce.Modules.Cart.Application.UseCase
                 cart.Clear(); // O una lógica específica mutando la lista privada '_items' si remueves por SKU
                 await _cartRepository.SaveAsync(cart);
             }
-            return cart ?? new Domain.Entities.Cart(cartId);
+            return cart ?? new Domain.Entities.CartEntity(cartId);
         }
     }
 }

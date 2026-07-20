@@ -6,53 +6,42 @@ namespace TractorEcommerce.Modules.Catalog.Domain.Entities
 {
     public class Product
     {
-        public string Id { get; private set; }
-        public string Name { get; private set; }
-        public string Brand { get; private set; }
-        public decimal Price { get; private set; }
-        public string Image { get; private set; }
-        public string Description { get; private set; }
-        public string Category { get; private set; } // "classics", "autonomous", etc.
-        public string? EnginePower { get; private set; }
-
-        // DDD: Encapsulamos la lista de variantes para proteger la consistencia
         private readonly List<ProductVariant> _variants = new();
-        public IReadOnlyCollection<ProductVariant> Variants => _variants.AsReadOnly();
 
-        private readonly List<string> _highlights = new();
-        public IReadOnlyCollection<string> Highlights => _highlights.AsReadOnly();
+        private Product() { } // EF Core
 
-        // Constructor requerido por EF Core o mapeadores
-        private Product() { }
-
-        public Product(string id, string name, string brand, decimal price, string image, string description, string category, string? enginePower = null)
+        public Product(
+            string code,
+            Guid categoryId,
+            string name,
+            string brand,
+            string description,
+            string imageUrl,
+            string enginePower)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("El ID del producto no puede estar vacío.");
-            if (price < 0) throw new ArgumentException("El precio no puede ser negativo.");
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("El nombre es requerido.", nameof(name));
 
-            Id = id;
+            Id = Guid.NewGuid();
+            Code = code;
+            CategoryId = categoryId;
             Name = name;
             Brand = brand;
-            Price = price;
-            Image = image;
             Description = description;
-            Category = category.ToLower();
+            ImageUrl = imageUrl;
             EnginePower = enginePower;
         }
 
-        public void AddVariant(string sku, int initialStock)
-        {
-            if (_variants.Any(v => v.Sku == sku))
-                throw new InvalidOperationException($"La variante con SKU {sku} ya existe en este producto.");
+        public Guid Id { get; private set; }
+        public string Code { get; private set; } = null!; // referencia legible tipo "AU-04", no es PK
+        public Guid CategoryId { get; private set; }
+        public string Name { get; private set; } = null!;
+        public string Brand { get; private set; } = null!;
+        public string Description { get; private set; } = null!;
+        public string ImageUrl { get; private set; } = null!;
+        public string EnginePower { get; private set; } = null!;
 
-            _variants.Add(new ProductVariant(sku, Id, initialStock));
-        }
-
-        public void AddHighlight(string highlight)
-        {
-            if (!string.IsNullOrWhiteSpace(highlight))
-                _highlights.Add(highlight);
-        }
+        public IReadOnlyCollection<ProductVariant> Variants => _variants.AsReadOnly();
     }
 
 }

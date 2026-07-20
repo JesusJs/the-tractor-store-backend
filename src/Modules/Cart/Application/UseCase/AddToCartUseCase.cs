@@ -16,14 +16,14 @@ namespace TractorEcommerce.Modules.Cart.Application.UseCase
             _cartRepository = cartRepository;
         }
 
-        public async Task<TractorEcommerce.Modules.Cart.Domain.Entities.Cart> ExecuteAsync(AddToCartCommand command)
+        public async Task<TractorEcommerce.Modules.Cart.Domain.Entities.CartEntity> ExecuteAsync(AddToCartCommand command)
         {
             // 1. Obtiene el carrito real de Postgres
             var cart = await _cartRepository.GetByUserIdAsync(command.CartId);
 
             if (cart == null)
             {
-                cart = new TractorEcommerce.Modules.Cart.Domain.Entities.Cart(command.CartId);
+                cart = new TractorEcommerce.Modules.Cart.Domain.Entities.CartEntity(command.CartId);
             }
 
             // 2. Aquí quemamos el precio de prueba o el que traigas del catálogo (ej. 150000) para ir rápido

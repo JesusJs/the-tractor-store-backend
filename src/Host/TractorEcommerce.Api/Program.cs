@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TractorEcommerce.Api.Extensions;
+using TractorEcommerce.Modules.Cart.Application.Interfaces.Repository;
+using TractorEcommerce.Modules.Cart.Infrastructure.Repository;
 using TractorEcommerce.Modules.Catalog.Application.Ports;
 using TractorEcommerce.Modules.Catalog.Application.UseCase;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Events.Messaging;
@@ -44,7 +46,6 @@ builder.Services.AddHostedService<KafkaOrderConsumer>();
 
 
 // Levanta el hilo de escucha de Kafka para el Carrito en segundo plano
-builder.Services.AddHostedService<TractorEcommerce.Modules.Cart.Infrastructure.Messaging.OrderPlacedConsumer>();
 // ==========================================
 // 3. SEGURIDAD (JWT) Y CORS
 // ==========================================
@@ -81,7 +82,7 @@ builder.Services.AddScoped<TractorEcommerce.Modules.Inventory.Application.Interf
 // Registrar Casos de Uso de Inventario
 builder.Services.AddScoped<TractorEcommerce.Modules.Inventory.Application.UseCase.DeductStockOnOrderPlacedUseCase>();
 //cart
-builder.Services.AddScoped<TractorEcommerce.Modules.Cart.Application.Interfaces.Repository.ICartRepository, TractorEcommerce.Modules.Cart.Infrastructure.Repository.CartRepository>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
 
 // Catalog Use Cases
 builder.Services.AddScoped<GetHomeTeasersUseCase>();

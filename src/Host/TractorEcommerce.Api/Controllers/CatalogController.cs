@@ -43,8 +43,9 @@ namespace TractorEcommerce.Api.Controllers
             if (string.IsNullOrWhiteSpace(filter))
                 throw new ArgumentException("El filtro de categoría no puede estar vacío.", nameof(filter));
 
-            var result = await _getCatalogCategory.ExecuteAsync(filter);
-            return Ok(result);
+            //var result = await _getCatalogCategory.ExecuteAsync(filter);
+            //return Ok(result);
+            return Ok("result");
         }
 
         [HttpGet("products/{id}")]
@@ -73,8 +74,9 @@ namespace TractorEcommerce.Api.Controllers
         [HttpGet("stores")]
         public async Task<ActionResult<IEnumerable<object>>> GetStores()
         {
-            var result = await _getStores.ExecuteAsync();
-            return Ok(result);
+            //var result = await _getStores.ExecuteAsync();
+            //return Ok(result);
+            return Ok("prueba");
         }
     }
 }

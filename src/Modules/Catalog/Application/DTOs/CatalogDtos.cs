@@ -22,15 +22,14 @@ namespace TractorEcommerce.Modules.Catalog.Application.DTOs
         );
 
         public record ProductItemDto(
-            string Id,
+            Guid Id,
+            Guid categoryId,
             string Name,
-            string Brand,
-            decimal Price,
+            string code,
+            string brand,
             string Image,
-            IEnumerable<string> Variants,
             string Description,
-            string? EnginePower,
-            int Stock
+            string? EnginePower
         );
 
         // Endpoint 3: GET /api/catalog/products/{id}

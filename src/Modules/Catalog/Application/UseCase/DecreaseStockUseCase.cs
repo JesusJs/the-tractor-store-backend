@@ -20,7 +20,7 @@ namespace TractorEcommerce.Modules.Catalog.Application.UseCase
             if (variant != null)
             {
                 // Descontar la cantidad comprada del stock actual
-                variant.UpdateStock(variant.Stock - quantity);
+                //variant.UpdateStock(variant.Stock - quantity);
 
                 // Guardar los cambios en el CatalogDbContext a través del repositorio
                 await _catalogRepository.UpdateVariantAsync(variant);
