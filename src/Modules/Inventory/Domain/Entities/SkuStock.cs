@@ -8,6 +8,7 @@ namespace TractorEcommerce.Modules.Inventory.Domain.Entities
     {
         public string Sku { get; private set; }
         public int AvailableStock { get; private set; }
+        public Guid Id { get; private set; }
 
         private SkuStock()
         {

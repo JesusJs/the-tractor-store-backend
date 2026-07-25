@@ -7,7 +7,10 @@ using TractorEcommerce.Modules.Catalog.Application.UseCase;
 //using TractorEcommerce.Modules.Catalog.Infrastructure.Events.Messaging;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Messaging;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Persistence;
+using TractorEcommerce.Modules.Inventory.Application.Interfaces.Repository;
+using TractorEcommerce.Modules.Inventory.Application.UseCase;
 using TractorEcommerce.Modules.Inventory.Infrastructure.Messaging;
+using TractorEcommerce.Modules.Inventory.Infrastructure.Repository;
 using TractorEcommerce.Modules.Order.Infrastructure.Messaging;
 using TractorEcommerce.Modules.Shared.TractorEcommerce.Modules.Shared.Application.Events;
 
@@ -77,9 +80,15 @@ builder.Services.AddScoped<TractorEcommerce.Modules.Order.Application.Interfaces
 
 // Casos de Uso de Order (Si los necesitas directo en controladores o handlers)
 builder.Services.AddScoped<TractorEcommerce.Modules.Order.Application.UseCase.CheckoutUseCase>();
-builder.Services.AddScoped<TractorEcommerce.Modules.Inventory.Application.Interfaces.Repository.IInventoryRepository, TractorEcommerce.Modules.Inventory.Infrastructure.Repository.InventoryRepository>();
 
-// Registrar Casos de Uso de Inventario
+
+//Inventory repositories
+builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
+
+//Inventory useCase
+builder.Services.AddScoped<GetInventoryStatusUseCase>();
+
+// Registrar Casos de Uso de InventarioGetInventoryStatusUseCase
 builder.Services.AddScoped<TractorEcommerce.Modules.Inventory.Application.UseCase.DeductStockOnOrderPlacedUseCase>();
 //cart
 builder.Services.AddScoped<ICartRepository, CartRepository>();
@@ -90,7 +99,6 @@ builder.Services.AddScoped<GetCatalogCategoryUseCase>();
 builder.Services.AddScoped<GetProductDetailUseCase>();
 builder.Services.AddScoped<GetRecommendationsUseCase>();
 builder.Services.AddScoped<GetStoresUseCase>();
-builder.Services.AddScoped<GetInventoryStatusUseCase>();
 
 // Sales Use Cases
 builder.Services.AddScoped<TractorEcommerce.Modules.Cart.Application.UseCase.AddToCartUseCase>();
