@@ -7,7 +7,7 @@ namespace TractorEcommerce.Modules.Catalog.Infrastructure.Persistence;
 public class CatalogDbContext : DbContext
 {
     public CatalogDbContext(DbContextOptions<CatalogDbContext> options) : base(options) { }
-    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Category> Category => Set<Category>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
     public DbSet<Store> Stores => Set<Store>();
@@ -19,12 +19,12 @@ public class CatalogDbContext : DbContext
         // ---------- Category ----------
         modelBuilder.Entity<Category>(builder =>
         {
-            builder.ToTable("categories");
+            builder.ToTable("category");
             builder.HasKey(c => c.Id);
 
             builder.Property(c => c.Name).HasMaxLength(150).IsRequired();
             builder.Property(c => c.Slug).HasMaxLength(150).IsRequired();
-            builder.HasIndex(c => c.Slug).IsUnique();
+            //builder.HasIndex(c => c.Slug).IsUnique();
         });
 
         // ---------- Product ----------
@@ -47,10 +47,10 @@ public class CatalogDbContext : DbContext
                 .HasForeignKey(p => p.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Metadata.FindNavigation(nameof(Product.Variants))!
+            builder.Metadata.FindNavigation(nameof(Product.product_variants))!
                 .SetPropertyAccessMode(PropertyAccessMode.Field);
 
-            builder.HasMany(p => p.Variants)
+            builder.HasMany(p => p.product_variants)
                 .WithOne()
                 .HasForeignKey(v => v.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -59,7 +59,7 @@ public class CatalogDbContext : DbContext
         // ---------- ProductVariant ----------
         modelBuilder.Entity<ProductVariant>(builder =>
         {
-            builder.ToTable("variants"); // según tu tabla recomendada: catalog_variants
+            builder.ToTable("product_variants"); // según tu tabla recomendada: catalog_variants
             builder.HasKey(v => v.Id);
 
             builder.Property(v => v.Sku).HasMaxLength(50).IsRequired();

@@ -20,23 +20,23 @@ namespace TractorEcommerce.Api.Controllers
             _logger = logger;
         }
 
-        [HttpGet("{sku}")]
-        public async Task<ActionResult<object>> GetInventory(string sku)
-        {
-            if (string.IsNullOrWhiteSpace(sku))
-                throw new ArgumentException("El SKU es obligatorio.", nameof(sku));
+        //[HttpGet("{sku}")]
+        //public async Task<ActionResult<object>> GetInventory(string sku)
+        //{
+        //    if (string.IsNullOrWhiteSpace(sku))
+        //        throw new ArgumentException("El SKU es obligatorio.", nameof(sku));
 
-            _logger.LogInformation("Consultando estado de inventario para el SKU: {Sku}", sku);
+        //    _logger.LogInformation("Consultando estado de inventario para el SKU: {Sku}", sku);
 
-            var status = await _getInventoryStatus.ExecuteAsync(sku);
+        //    var status = await _getInventoryStatus.ExecuteAsync(sku);
 
-            if (status == null)
-            {
-                _logger.LogWarning("Consulta fallida: El SKU {Sku} no existe en el inventario.", sku);
-                return Ok(new { sku = sku, stock = 0 });
-            }
+        //    if (status == null)
+        //    {
+        //        _logger.LogWarning("Consulta fallida: El SKU {Sku} no existe en el inventario.", sku);
+        //        return Ok(new { sku = sku, stock = 0 });
+        //    }
 
-            return Ok(status);
-        }
+        //    return Ok(status);
+        //}
     }
 }

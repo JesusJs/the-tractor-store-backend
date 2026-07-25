@@ -20,13 +20,29 @@ namespace TractorEcommerce.Modules.Catalog.Infrastructure.Repository
 
         public async Task<Category> GetCategoryBySlug(string slug)
         {
-            return await _context.Categories.Where(e => e.Slug == slug).FirstOrDefaultAsync();
-        
+            return await _context.Category.Where(e => e.Slug == slug).FirstOrDefaultAsync();
         }
 
-        public async Task<List<Category>> GetCategoryById(Guid category_id)
-        { 
-            return await _context.Categories.Where(e=> e.Id == category_id).ToListAsync();
+        public async Task<List<Product>> GetProductsByIdAsync(Guid categoryId)
+        {
+            return await _context.Products
+                .Include(p => p.product_variants)
+                .Where(p => p.CategoryId == categoryId)
+                .ToListAsync();
+        }
+
+        public async Task<List<Product>> GetAllProductsAsync()
+        {
+            return await _context.Products
+                .Include(p => p.product_variants)
+                .ToListAsync();
+        }
+
+        public async Task<Product?> GetProductByIdAsync(Guid id)
+        {
+            return await _context.Products
+                .Include(p => p.product_variants)
+            .FirstOrDefaultAsync(p => p.Id == id);
         }
 
         //public async Task<IEnumerable<Product>> GetByCategoryAsync(string category)
@@ -45,13 +61,7 @@ namespace TractorEcommerce.Modules.Catalog.Infrastructure.Repository
         //        .ToListAsync();
         //}
 
-        //public async Task<Product?> GetByIdAsync(string id)
-        //{
-        //    return await _context.Products
-        //        .Include(p => p.Variants)
-        //        .FirstOrDefaultAsync();
-        //        //.FirstOrDefaultAsync(p => p.Id == id);
-        //}
+
 
         //public async Task<ProductVariant?> GetVariantBySkuAsync(string sku)
         //{
@@ -68,10 +78,10 @@ namespace TractorEcommerce.Modules.Catalog.Infrastructure.Repository
         //        .ToListAsync();
         //}
 
-        //public async Task<IEnumerable<Store>> GetStoresAsync()
-        //{
-        //    return await _context.Stores.ToListAsync();
-        //}
+        public async Task<IEnumerable<Store>> GetStoresAsync()
+        {
+            return await _context.Stores.ToListAsync();
+        }
 
         //public async Task<IEnumerable<Product>> GetProductsBySkusAsync(IEnumerable<string> skus)
         //{

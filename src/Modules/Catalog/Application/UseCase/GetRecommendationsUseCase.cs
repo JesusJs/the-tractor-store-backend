@@ -22,7 +22,8 @@ namespace TractorEcommerce.Modules.Catalog.Application.UseCase
             IEnumerable<Product> recommendedProducts;
             if (string.IsNullOrWhiteSpace(skus))
             {
-                recommendedProducts = await _catalogRepository.GetByCategoryAsync("all");
+                var category = await _catalogRepository.GetCategoryBySlug("all");
+                recommendedProducts = await _catalogRepository.GetProductsByIdAsync(category.Id);
             }
             else
             {
@@ -38,7 +39,7 @@ namespace TractorEcommerce.Modules.Catalog.Application.UseCase
                         var prods = await _catalogRepository.GetByCategoryAsync(category);
                         allOfSameCategories.AddRange(prods);
                     }
-                    
+
                     recommendedProducts = allOfSameCategories
                         .Where(p => !matchedProducts.Any(mp => mp.Id == p.Id))
                         .DistinctBy(p => p.Id);

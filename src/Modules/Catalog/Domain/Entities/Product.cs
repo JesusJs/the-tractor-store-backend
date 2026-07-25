@@ -6,7 +6,7 @@ namespace TractorEcommerce.Modules.Catalog.Domain.Entities
 {
     public class Product
     {
-        private readonly List<ProductVariant> _variants = new();
+        private readonly List<ProductVariant> _product_variants = new();
 
         private Product() { } // EF Core
 
@@ -41,7 +41,7 @@ namespace TractorEcommerce.Modules.Catalog.Domain.Entities
         public string ImageUrl { get; private set; } = null!;
         public string EnginePower { get; private set; } = null!;
 
-        public IReadOnlyCollection<ProductVariant> Variants => _variants.AsReadOnly();
+        public IReadOnlyCollection<ProductVariant> product_variants => _product_variants.AsReadOnly();
     }
 
 }

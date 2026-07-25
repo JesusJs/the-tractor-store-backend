@@ -13,12 +13,12 @@ namespace TractorEcommerce.Modules.Catalog.Application.UseCase
             _catalogRepository = catalogRepository;
         }
 
-        public async Task<InventoryStatusDto?> ExecuteAsync(string sku)
-        {
-            var variant = await _catalogRepository.GetVariantBySkuAsync(sku);
-            if (variant == null) return null;
+        //public async Task<InventoryStatusDto?> ExecuteAsync(string sku)
+        //{
+        //    var variant = await _catalogRepository.GetVariantBySkuAsync(sku);
+        //    if (variant == null) return null;
 
-            return new InventoryStatusDto(sku, variant.Stock);
-        }
+        //    return new InventoryStatusDto(sku, variant.Stock);
+        //}
     }
 }

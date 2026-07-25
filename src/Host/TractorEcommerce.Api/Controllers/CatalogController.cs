@@ -43,22 +43,19 @@ namespace TractorEcommerce.Api.Controllers
             if (string.IsNullOrWhiteSpace(filter))
                 throw new ArgumentException("El filtro de categoría no puede estar vacío.", nameof(filter));
 
-            //var result = await _getCatalogCategory.ExecuteAsync(filter);
+            var result = await _getCatalogCategory.ExecuteAsync(filter);
 
-            //return Ok(result);
-            return Ok("result");
+            return Ok(result);
         }
 
         [HttpGet("products/{id}")]
-        public async Task<ActionResult<ProductDetailDto>> GetProduct(string id)
+        public async Task<ActionResult<ProductDetailDto>> GetProduct(Guid id)
         {
-            if (string.IsNullOrWhiteSpace(id))
-                throw new ArgumentException("El ID del producto es obligatorio.", nameof(id));
+            //if (string.IsNullOrWhiteSpace(id))
+            //    throw new ArgumentException("El ID del producto es obligatorio.", nameof(id));
 
             var detail = await _getProductDetail.ExecuteAsync(id);
 
-            // CORRECTO (404): En vez de usar return NotFound(), lanzamos nuestra excepción de dominio.
-            // El GlobalExceptionMiddleware la atrapará y devolverá el JSON estructurado con código NOT_FOUND.
             if (detail == null)
                 throw new DomainNotFoundException($"El tractor con ID '{id}' no existe en el catálogo.");
 
@@ -75,9 +72,8 @@ namespace TractorEcommerce.Api.Controllers
         [HttpGet("stores")]
         public async Task<ActionResult<IEnumerable<object>>> GetStores()
         {
-            //var result = await _getStores.ExecuteAsync();
-            //return Ok(result);
-            return Ok("prueba");
+            var result = await _getStores.ExecuteAsync();
+            return Ok(result);
         }
     }
 }

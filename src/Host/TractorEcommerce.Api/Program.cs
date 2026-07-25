@@ -4,7 +4,7 @@ using TractorEcommerce.Modules.Cart.Application.Interfaces.Repository;
 using TractorEcommerce.Modules.Cart.Infrastructure.Repository;
 using TractorEcommerce.Modules.Catalog.Application.Ports;
 using TractorEcommerce.Modules.Catalog.Application.UseCase;
-using TractorEcommerce.Modules.Catalog.Infrastructure.Events.Messaging;
+//using TractorEcommerce.Modules.Catalog.Infrastructure.Events.Messaging;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Messaging;
 using TractorEcommerce.Modules.Catalog.Infrastructure.Persistence;
 using TractorEcommerce.Modules.Inventory.Infrastructure.Messaging;
@@ -42,7 +42,7 @@ builder.Services.AddHostedService<CatalogProductSyncedConsumer>();
 builder.Services.AddHostedService<OrderPlacedConsumer>();
 builder.Services.AddHostedService<InventoryResponseConsumer>();
 // Consumidor (Receptor en segundo plano)
-builder.Services.AddHostedService<KafkaOrderConsumer>();
+//builder.Services.AddHostedService<KafkaOrderConsumer>();
 
 
 // Levanta el hilo de escucha de Kafka para el Carrito en segundo plano

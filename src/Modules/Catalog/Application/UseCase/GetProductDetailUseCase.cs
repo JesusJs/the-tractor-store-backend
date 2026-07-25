@@ -14,20 +14,19 @@ namespace TractorEcommerce.Modules.Catalog.Application.UseCase
             _catalogRepository = catalogRepository;
         }
 
-        public async Task<ProductDetailDto?> ExecuteAsync(string id)
+        public async Task<ProductDetailDto?> ExecuteAsync(Guid id)
         {
-            var prod = await _catalogRepository.GetByIdAsync(id);
+            var prod = await _catalogRepository.GetProductByIdAsync(id);
             if (prod == null) return null;
 
             return new ProductDetailDto(
                 Id: prod.Id,
                 Name: prod.Name,
                 Brand: prod.Brand,
-                Price: prod.Price,
-                Image: prod.Image,
+                //Price: prod.Price,
+                ImageUrl: prod.ImageUrl,
                 Description: prod.Description,
-                Variants: prod.Variants.Select(v => v.Sku).ToList(),
-                Highlights: prod.Highlights.ToList()
+                EnginePower: prod.EnginePower
             );
         }
     }

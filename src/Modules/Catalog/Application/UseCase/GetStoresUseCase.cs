@@ -19,7 +19,7 @@ namespace TractorEcommerce.Modules.Catalog.Application.UseCase
 
             if (slug != null)
             {
-                await _catalogRepository.GetCategoryById(slug.Id);
+                //await _catalogRepository.GetCategoryById(slug.Id);
             }
 
             // Falta crear Dto para devolver la categoria.
@@ -28,17 +28,17 @@ namespace TractorEcommerce.Modules.Catalog.Application.UseCase
         }
 
 
-        //public async Task<IEnumerable<StoreResponse>> ExecuteAsync()
-        //{
-        //    var stores = await _catalogRepository.GetStoresAsync();
-        //    return stores.Select(s => new StoreResponse(
-        //     s.Id,
-        //     s.Name,
-        //     s.Address ?? string.Empty,
-        //     s.City ?? string.Empty,
-        //     s.Image ?? string.Empty
-        //    )).ToList();
-        //}
+        public async Task<IEnumerable<StoreResponse>> ExecuteAsync()
+        {
+            var stores = await _catalogRepository.GetStoresAsync();
+            return stores.Select(s => new StoreResponse(
+             s.Id,
+             s.Name,
+             s.Address ?? string.Empty,
+             s.City ?? string.Empty,
+             s.ImageUrl ?? string.Empty
+            )).ToList();
+        }
     }
 }
  
