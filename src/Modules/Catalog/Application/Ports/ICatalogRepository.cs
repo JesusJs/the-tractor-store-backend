@@ -8,7 +8,7 @@ namespace TractorEcommerce.Modules.Catalog.Application.Ports
     public interface ICatalogRepository
     {
         Task<Category> GetCategoryBySlug(string slug);
-        Task<List<Product>> GetProductsByIdAsync(Guid categoryId);
+        Task<List<Product>> GetProductsByIdAsync(Guid id);
         Task<List<Product>> GetAllProductsAsync();
         Task<Product?> GetProductByIdAsync(Guid categoryId);
         //Task<IEnumerable<Product>> GetByCategoryAsync(string category);
@@ -17,7 +17,7 @@ namespace TractorEcommerce.Modules.Catalog.Application.Ports
         //// Para simplificar la Home (Endpoint 1), simulamos teasers basados en categorías activas
         //Task<IEnumerable<string>> GetActiveCategoriesAsync();
         Task<IEnumerable<Store>> GetStoresAsync();
-        //Task<IEnumerable<Product>> GetProductsBySkusAsync(IEnumerable<string> skus);
+        Task<IEnumerable<Product>> GetProductsBySkusAsync(IEnumerable<string> skus);
         //Task UpdateVariantAsync(ProductVariant variant);
     }
 }

@@ -32,11 +32,12 @@ namespace TractorEcommerce.Modules.Catalog.Application.UseCase
 
                 if (matchedProducts.Any())
                 {
-                    var categories = matchedProducts.Select(p => p.Category).Distinct().ToList();
+                    var categories = matchedProducts.Select(p => p.CategoryId).Distinct().ToList();
                     var allOfSameCategories = new List<Product>();
                     foreach (var category in categories)
                     {
-                        var prods = await _catalogRepository.GetByCategoryAsync(category);
+
+                        var prods = await _catalogRepository.GetProductsByIdAsync(category);
                         allOfSameCategories.AddRange(prods);
                     }
 
@@ -46,7 +47,8 @@ namespace TractorEcommerce.Modules.Catalog.Application.UseCase
                 }
                 else
                 {
-                    recommendedProducts = await _catalogRepository.GetByCategoryAsync("all");
+                    var category = await _catalogRepository.GetCategoryBySlug("all");
+                    recommendedProducts = await _catalogRepository.GetProductsByIdAsync(category.Id);
                 }
             }
 
@@ -54,12 +56,13 @@ namespace TractorEcommerce.Modules.Catalog.Application.UseCase
                 Id: p.Id,
                 Name: p.Name,
                 Brand: p.Brand,
-                Price: p.Price,
-                Image: p.Image,
-                Variants: p.Variants.Select(v => v.Sku).ToList(),
+                CategoryId: p.CategoryId,
+                Code:p.Code,
+                Image: p.ImageUrl,
+                //Variants: p.Variants.Select(v => v.Sku).ToList(),
                 Description: p.Description,
-                EnginePower: p.EnginePower,
-                Stock: p.Variants.Sum(v => v.Stock)
+                EnginePower: p.EnginePower
+                //Stock: p.Variants.Sum(v => v.Stock)
             )).ToList();
         }
     }

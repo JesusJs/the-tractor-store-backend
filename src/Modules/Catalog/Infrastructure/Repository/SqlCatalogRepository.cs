@@ -23,11 +23,11 @@ namespace TractorEcommerce.Modules.Catalog.Infrastructure.Repository
             return await _context.Category.Where(e => e.Slug == slug).FirstOrDefaultAsync();
         }
 
-        public async Task<List<Product>> GetProductsByIdAsync(Guid categoryId)
+        public async Task<List<Product>> GetProductsByIdAsync(Guid id)
         {
             return await _context.Products
                 .Include(p => p.product_variants)
-                .Where(p => p.CategoryId == categoryId)
+                .Where(p => p.CategoryId == id)
                 .ToListAsync();
         }
 
@@ -83,21 +83,21 @@ namespace TractorEcommerce.Modules.Catalog.Infrastructure.Repository
             return await _context.Stores.ToListAsync();
         }
 
-        //public async Task<IEnumerable<Product>> GetProductsBySkusAsync(IEnumerable<string> skus)
-        //{
-        //    var skuList = skus.Select(s => s.ToUpper()).ToList();
+        public async Task<IEnumerable<Product>> GetProductsBySkusAsync(IEnumerable<string> skus)
+        {
+            var skuList = skus.Select(s => s.ToUpper()).ToList();
 
-        //    var productIds = await _context.ProductVariants
-        //        .Where(v => skuList.Contains(v.Sku.ToUpper()))
-        //        .Select(v => v.ProductId)
-        //        .Distinct()
-        //        .ToListAsync();
+            var productIds = await _context.ProductVariants
+                .Where(v => skuList.Contains(v.Sku.ToUpper()))
+                .Select(v => v.ProductId)
+                .Distinct()
+                .ToListAsync();
 
-        //    return await _context.Products
-        //        .Include(p => p.Variants)
-        //        .Where(p => productIds.Contains(p.Id))
-        //        .ToListAsync();
-        //}
+            return await _context.Products
+                .Include(p => p.product_variants)
+                .Where(p => productIds.Contains(p.Id))
+                .ToListAsync();
+        }
 
         //public async Task UpdateVariantAsync(ProductVariant variant)
         //{
