@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using TractorEcommerce.Modules.Cart.Application.Interfaces.Repository;
+using TractorEcommerce.Modules.Cart.Domain.Entities;
 
 namespace TractorEcommerce.Modules.Cart.Application.UseCase
 {
@@ -11,10 +12,10 @@ namespace TractorEcommerce.Modules.Cart.Application.UseCase
 
         public GetCartUseCase(ICartRepository cartRepository) { _cartRepository = cartRepository; }
 
-        public async Task<TractorEcommerce.Modules.Cart.Domain.Entities.CartEntity> ExecuteAsync(string userId)
+        public async Task<CartEntity> ExecuteAsync(string userId)
         {
             var cart = await _cartRepository.GetByUserIdAsync(userId);
-            return cart ?? new Domain.Entities.CartEntity(userId); // Si no existe, devuelve uno vacío listo para el Front
+            return cart ?? new CartEntity(userId); 
         }
     }
 }
